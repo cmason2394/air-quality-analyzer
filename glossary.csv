@@ -1,0 +1,66 @@
+,Variables,Units,Names and Units,Readable Name,Description
+0,SampleTime,(HH:MM:SS),SampleTime(HH:MM:SS),Sample Time,Amount of time passed since the start of sample collection
+1,UnixTime,(s),UnixTime(s),Unix Time,Number of seconds since 01/01/1970
+2,DateTimeUTC,(YYYY-MM-DDTHH:MM:SS) (UTC date time format),DateTimeUTC(YYYY-MM-DDTHH:MM:SS) (UTC date time format),Coordinated Universal Time,timezone from which other timezones determined
+3,DateTimeLocal,(YYYY-MM-DDTHH:MM:SS) (Local date time format),DateTimeLocal(YYYY-MM-DDTHH:MM:SS) (Local date time format),Local Time,Time at the study site
+4,VolumetricFlowRate,(L*min^-1),VolumetricFlowRate(L*min^-1),Volumetric Flow Rate, liters of air flowing through the filter each minute
+5,SampledVolume,(L),SampledVolume(L), Sampled Volume, Total accrued liters of air sampled so far during the study
+6,AtmoT,(C),AtmoT(C),Atmospheric Temperature,Temperature in Celcius outside of the device
+7,PumpT,(C),PumpT(C),Pump Temperature,Temperature in Celcius measured at the air pump in the device
+8,FdpT,(C),FdpT(C),Temperature of the Filter Differential Pressure Sensor,Temperature in Celcius measured at the filter differential pressure sensor for the device
+9,BattT,(C),BattT(C),Battery Temperature,Temperature of the device's battery
+10,AccelT,(C),AccelT(C),Accelerometer Temperature,Temperature in Celcius measured at the device's accelerometer
+11,AtmoP,(hPa),AtmoP(hPa),Atmospheric Pressure,"Atmospheric pressure (changes with altitude, temperature, and humidity)"
+12,PumpP,(hPa),PumpP(hPa),Pump Pressure,Pressure at the device's pump
+13,FdPdP,(Pa),FdPdP(Pa),Differential Pressure Across Filter,The difference in pressure from one side of the filter to the other
+14,PumpRH,(%),PumpRH(%),Relative Humidity,Air water content measured at the device's pump
+15,AtmoRho,(g*L^-1),AtmoRho(g*L^-1),Atmospheric Air Density,"The density of the ambient air (changes with altitude, pressure, temperature and humidity)"
+16,PumpV,(V),PumpV(V),Pump Voltage,The pump's power use
+17,MassFlow,(g*min^-1),MassFlow(g*min^-1),Mass Flow,Mass of air sucked through the filter every minute
+18,BFGvolt,(V),BFGvolt(V),Battery Voltage,The battery's energy output per unit of charge
+19,PMMeasCnt,(#),PMMeasCnt(#),Particulate Matter Measurement Count,Number of particles passing through the filter
+20,PM1MC,(ug*m^-3),PM1MC(ug*m^-3),PM1 Particle Mass Concentration,Concentration of particlute matter per cubic meter where the particle diameter is 1 micrometer or less
+21,PM2_5MC,(ug*m^-3),PM2_5MC(ug*m^-3),PM2.5 Particle Mass Concentration,Concentration of particulate matter per cubic meter where the particle diameter is 2.5 micrometers or less
+22,PM4MC,(ug*m^-3),PM4MC(ug*m^-3),PM4 Particle Mass Concentration,Concentration of particulate matter per cubic meter where the particle diameter is 4 micrometers or less
+23,PM10MC,(ug*m^-3),PM10MC(ug*m^-3),PM10 Particle Mass Concentration,Concentration of particulate matter per cubic meter where the particle diameter is 10 micrometers or less
+24,PM0_5NC,(#*cm^-3),PM0_5NC(#*cm^-3),PM0.5 Particle Count,The number of particles in a cubic centimeter that are 0.5 micrometers or less in diameter
+25,PM1NC,(#*cm^-3),PM1NC(#*cm^-3),PM1 Particle Count,The number of particles in a cubic centimeter that are 1 micrometer or less in diameter
+26,PM2_5NC,(#*cm^-3),PM2_5NC(#*cm^-3),PM2.5 Particle Count,The number of particles in a cubic centimeter that are 2.5 micrometers or less in diameter
+27,PM4NC,(#*cm^-3),PM4NC(#*cm^-3),PM4 Particle Count,The number of particles in a cubic centimeter that are 4 micrometers or less in diameter
+28,PM10NC,(#*cm^-3),PM10NC(#*cm^-3),PM10 Particle Count,The number of particles in a cubic centimeter that are 10 micrometers or less in diameter
+29,PMtypicalParticleSize,(um),PMtypicalParticleSize(um),Typical Particle Size,The average size of particulate matter (in micrometers) that the filter measures
+30,PM2_5SampledMass,(ug),PM2_5SampledMass(ug),Sampled Mass of PM2.5 Particles,Total mass of particulates (in micrograms) passing through the filter that are 2.5 micrometers in diameter or less 
+31,GPSQual,(-),GPSQual(-),GPS Quality,"Accuracy of GPS measurement. It takes many factors into account such as satellite geometry, blocked signals, weather, and physical device design. The higher the value, the less precise the GPS readings"
+32,GPSlat,(decimalDegree),GPSlat(decimalDegree),Latitude,Latitudinal coordinate
+33,GPSlon,(decimalDegree),GPSlon(decimalDegree),Longitude,Longitudinal coordinate
+34,GPSalt,(m),GPSalt(m),Altitude,Meters above sea level
+35,GPSsat,(integer),GPSsat(integer),Satellite Count,Number of satellites used in determining GPS location
+36,GPSspeed,(m*s^-1),GPSspeed(m*s^-1),Speed,How fast the device is moving (meters per second)
+37,GPShDOP,(-),GPShDOP(-),GPS Horizontal Degree of Precision,"Measure of GPS precision in the horizontal plane. The higher the value, the less precise the GPS readings"
+38,AccelX,(mg),AccelX(mg),Lateral Acceleration,"Change of speed measured in the x-axis direction (microgravitational units, 0.01 meters per second per second)"
+39,AccelXMin,(mg),AccelXMin(mg),Minimum Lateral Acceleration,Slowest acceleration during the measured interval in the x-axis direction
+40,AccelXMax,(mg),AccelXMax(mg),Maximum Lateral Acceleration,Fastest acceleration during the measured interval in the x-axis direction
+41,AccelY,(mg),AccelY(mg),Longitudinal Acceleration,"Change of speed measured in the y-axis direction (microgravitational units, 0.01 meters per second per second)"
+42,AccelYMin,(mg),AccelYMin(mg),Minimum Longitudinal Acceleration,Slowest acceleration during the measured interval in the y-axis direction
+43,AccelYMax,(mg),AccelYMax(mg),Maximum Longitudinal Acceleration,Fastest acceleration during the measured interval in the y-axis direction
+44,AccelZ,(mg),AccelZ(mg),Vertical Acceleration,"Change of speed measured in the z-axis direction (microgravitational units, 0.01 meters per second per second)"
+45,AccelZMin,(mg),AccelZMin(mg),Minimum Vertical Acceleration,Slowest acceleration during the measured interval in the z-axis direction
+46,AccelZMax,(mg),AccelZMax(mg),Maximum Vertical Acceleration,Fastest acceleration during the measured interval in the z-axis direction
+47,RotX,(mdeg*s^-1),RotX(mdeg*s^-1),Lateral Rotation,Rotation along the x-axis in micro-degrees per second
+48,RotXMin,(mdeg*s^-1),RotXMin(mdeg*s^-1),Minimum Lateral Rotation,Slowest rotation during the measured interval along the x-axis
+49,RotXMax,(mdeg*s^-1),RotXMax(mdeg*s^-1),Maximum Lateral Rotation,Fastest rotation during the measured interval along the x-axis
+50,RotY,(mdeg*s^-1),RotY(mdeg*s^-1),Longitudinal Rotation,Rotation along the y-axis in miro-degrees per second
+51,RotYMin,(mdeg*s^-1),RotYMin(mdeg*s^-1),Minimum Longitudinal Rotation,Slowest rotation during the measured interval along the y-axis
+52,RotYMax,(mdeg*s^-1),RotYMax(mdeg*s^-1),Maximum Longitudinal Rotation,Fastest rotation during the measured interval along the y-axis
+53,RotZ,(mdeg*s^-1),RotZ(mdeg*s^-1),Vertical Rotation,Rotation along the z-axis in micro-degrees per second
+54,RotZMin,(mdeg*s^-1),RotZMin(mdeg*s^-1),Minimum Vertical Rotation,Slowest rotation during the measured interval along the z-axis
+55,RotZMax,(mdeg*s^-1),RotZMax(mdeg*s^-1),Maximum Vertical Rotation,Fastest rotation during the measured interval along the z-axis
+56,Xup,(%),Xup(%),Latitudinal Increase,Relative positive change in position (latitude)
+57,XDown,(%),XDown(%),Latitudinal Decrease,Relative negative change in position (latitude)
+58,Yup,(%),Yup(%),Longitudinal Increase,Relative positive change in position (longitude)
+59,Ydown,(%),Ydown(%),Longitudinal Decrease,Relative negative change in position (longitude)
+60,Zup,(%),Zup(%),Vertical Increase,Relative positive change in position (vertically)
+61,Zdown,(%),Zdown(%),Vertical Decrease,Relative negative change in position (vertically)
+62,StepCount,(#),StepCount(#),Step Count,Number of steps taken during measured interval
+63,TPumpsOFF,(s),TPumpsOFF(s),Time Pumps Off,The seconds in a minute that the pumps are not pulling in air
+64,TPumpsON,(s),TPumpsON(s),Time Pumps On,The seconds in a minute that the pumps are actively pumping air

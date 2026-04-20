@@ -316,26 +316,6 @@ def select_file(contents, filename):
                                 'width': '50%',
                                 'display': 'inline-block'
                             }),
-
-                            # guiding text for summary statistics
-                            html.Div(
-                                [
-                                    html.H3('How to interpret summary statistics'),
-                                    html.Strong('Mean: '),
-                                    html.Span(strings.mean_explanation),
-                                    html.Strong('Standard Deviation: '),
-                                    html.Span(strings.stdDev_explanation),
-                                    html.Strong('Coefficient of Variation: '),
-                                    html.Span(strings.coefV_explanation),
-                                    html.Strong('Inter-Quartile Range: '),
-                                    html.Span(strings.iqr_explanation)
-                                ],
-                                style={
-                                    'whiteSpace': 'pre-line',
-                                    'width': '50%',
-                                    'display': 'inline-block',
-                                    'float': 'right'
-                                })
                         ])
         except ValueError as error: #NameError?, ValueError?, EOFError?, RuntimeError?
             print('Program error:')

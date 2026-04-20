@@ -274,6 +274,7 @@ def select_file(contents, filename):
                                     "name": i,
                                     "id": i
                                 } for i in df_stats.columns],
+                                hidden_columns=['beyondLimit'],  # hide column used for conditional styling 
                                 tooltip_header={
                                     'Variable': 'Measured metric of interest',
                                     'Mean': strings.mean_explanation,
@@ -299,7 +300,8 @@ def select_file(contents, filename):
                                         'column_id': 'Variable',
                                     },
                                     'textAlign': 'left'
-                                }],
+                                }],  
+
                                 style_data_conditional=[{
                                         'if': {
                                             'column_id': 'Variable',
@@ -310,10 +312,10 @@ def select_file(contents, filename):
                                             'row_index': 'odd'  # Temporary test to see if conditional styling works
                                         },
                                         'backgroundColor': 'lightgrey'
-                                    }],
+                                    }, {'if': {'column_id': 'beyondLimit'}, 'display': 'none'}],
                             ),
                             style={
-                                'width': '50%',
+                                'width': '48%',
                                 'display': 'inline-block'
                             }),
                         ])

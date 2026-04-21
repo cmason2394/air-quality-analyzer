@@ -7,6 +7,9 @@ tempCodeRunnerFile.py
 *.log
 *.venv/
 *vscode/
+*.mp4
+*.mov
+*.avi
 
 
 

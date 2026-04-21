@@ -14,8 +14,7 @@ Researchers at the Center for Energy Development and Health are studying the air
 
 ### What this program does
 This application ingests log files from those devices, cleans and processes the data, flags completeness issues and sensor incongruencies, and displays the results through an interactive visual dashboard.
-
-**Note**: Personally identifiable information in the example datasets are scrubbed to protect the privacy of participants. 
+_Note_: Personally identifiable information in the example datasets are scrubbed to protect the privacy of participants. 
 
 ### Impact
 Researchers can quickly determine if a study ran short, if the device died or malfunctioned, and if any variables were measured out of an expected range. This helps determine the completeness, accuracy and trustworthiness of the study results. Researchers can also use the program for exploratory analysis of the data to understand what the participants’ air quality is like in their daily life.
@@ -67,9 +66,11 @@ Researchers can quickly determine if a study ran short, if the device died or ma
 ```
 
 2. Navigate to the local address shown in the terminal (usually called `http://127.0.0.1:8050/`) and open in your browser:
+
 ![Dash link in terminal](docs/images/dash-running.png)
 
 3. To explore the app without your own data, click the button on the landing page and use a csv file in the `example_data/` folder:
+
 ![Project Directory](docs/images/repo-folder.png)
 ![Example data directory](docs/images/example_data-folder.png)
 

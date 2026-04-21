@@ -312,7 +312,7 @@ def select_file(contents, filename):
                                             'row_index': 'odd'  # Temporary test to see if conditional styling works
                                         },
                                         'backgroundColor': 'lightgrey'
-                                    }, {'if': {'column_id': 'beyondLimit'}, 'display': 'none'}],
+                                    }],
                             ),
                             style={
                                 'width': '48%',

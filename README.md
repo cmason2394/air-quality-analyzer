@@ -22,8 +22,11 @@ Researchers can quickly determine if a study ran short, if the device died or ma
 
 ## **Demo**
 
-??? image of the landing page
-??? image of the page once a log file is loaded
+[Landing Page](docs/images/landing-page.png)
+[Table](docs/images/table.png)
+[Scatterplot](docs/images/scatterplot.png)
+[Alerts and Summary Statistics](docs/images/flags-summary-stats.png)
+
 ??? Video of using the page
 
 ## **Installation**
@@ -38,13 +41,14 @@ Clone this repo and install dependencies:
 
 ??? code
 
-2. Follow url in terminal:
+2. Follow Dash link in terminal:
 
-??? Show screenshot of what/where this is
+[Dash link in terminal](docs/images/dash-running.png)
 
 3. Click button on landing page and use a file in the example_data folder:
 
-??? Show screenshot of what/where this is
+[Project Directory](docs/images/repo-folder.png)
+[Example data directory](docs/images/example_data-folder.png)
 
 4. Interact with the page. 
 - **Table**: Hide/display variables in the table. Scroll down or across the table to see values. Hover over the column headings to see a short description of the heading.

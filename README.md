@@ -10,15 +10,15 @@ This application analyzes air quality log files for complete and reliable data.
 ## **Description**
 
 ### Background
-Researchers at the Center for Energy Development and Health are studying the air quality to which individuals are exposed, especially in the developing world. Participants wear devices that monitor air quality for a set period in which the device tracks particulate matter in the air and location data. It also measures environmental metrics such as temperature and device metrics such as battery power. That data is stored in raw log files. 
+Researchers at the Center for Energy Development and Health are studying the air quality to which individuals are exposed, especially in the developing world. Participants wear devices that monitor air quality for a set period in which the device tracks particulate matter and location data. It also measures environmental metrics such as temperature and device metrics such as battery power. The data is stored in raw log files. 
 
 ### What this program does
-This application looks at the log files from those devices, cleans and processes it, checks for completeness and incongruencies, and then displays the data visually and statistically. The user can select measured metrics to plot on a scatterplot. Doing so automatically calculates summary statistics and the amount of time that variable measured outside of an expected range. 
+This application ingests log files from those devices, cleans and processes the data, flags completeness issues and sensor incongruencies, and displays the results through an interactive visual dashboard.
 
 **Note**: Personally identifiable information in the example datasets are scrubbed to protect the privacy of participants. 
 
 ### Impact
-Researchers can quickly determine if a study ran short, if the device died or malfunctioned during the study, and if any variables were measured out of an expected range. This helps determine the completeness, accuracy and trustworthiness of the study results. Researchers can also use the program for exploratory analysis of the data to understand what the participants’ air quality is like in their daily life.
+Researchers can quickly determine if a study ran short, if the device died or malfunctioned, and if any variables were measured out of an expected range. This helps determine the completeness, accuracy and trustworthiness of the study results. Researchers can also use the program for exploratory analysis of the data to understand what the participants’ air quality is like in their daily life.
 
 
 ## **Demo**
@@ -75,7 +75,7 @@ Researchers can quickly determine if a study ran short, if the device died or ma
 
 4. Interact with the page:
 - **Table**: Hide/display variables in the table. Scroll down or across the table to see values. Hover over the column headings to see a short description of the heading.
-- **Scatterplot**: Radio button to select the way time is displayed on the x-axis, local time, UTC time, or sample time. Dropdown selection to view different device metrics on the y-axis. Selecting device metrics automatically displays for how long that metric was outside of its expected range and a row in the summary statistics table. This tells researchers how reliable and accurate the sensor data is.
+- **Scatterplot**: Radio button to select the way time is displayed on the x-axis (local time, UTC time, or sample time). Dropdown selection to view different device metrics on the y-axis. Selecting device metrics automatically displays for how long that metric was outside of its expected range and a row in the summary statistics table. This tells researchers how reliable and accurate the sensor data is.
 
 
 ## **Features**
@@ -99,8 +99,13 @@ Researchers can quickly determine if a study ran short, if the device died or ma
 - **Visualizations for air quality data**: scatterplot of particulate matter concentration and an air quality heat map.
 
 
+## **License**
+MIT License — see [LICENSE](LICENSE) for details.
+
+
 ## **Contributing**
 Open to feedback and suggestions. Feel free to open an issue.
+
 
 ## **Acknowledgments**
 Thanks to my mentor, [Dr. Christian L'Orange](https://www.engr.colostate.edu/me/faculty/dr-christian-lorange/), for guiding me through this project. 

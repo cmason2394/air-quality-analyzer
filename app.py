@@ -274,6 +274,7 @@ def select_file(contents, filename):
                                     "name": i,
                                     "id": i
                                 } for i in df_stats.columns],
+                                hidden_columns=['beyondLimit'],  # hide column used for conditional styling 
                                 tooltip_header={
                                     'Variable': 'Measured metric of interest',
                                     'Mean': strings.mean_explanation,
@@ -299,7 +300,8 @@ def select_file(contents, filename):
                                         'column_id': 'Variable',
                                     },
                                     'textAlign': 'left'
-                                }],
+                                }],  
+
                                 style_data_conditional=[{
                                         'if': {
                                             'column_id': 'Variable',
@@ -313,29 +315,9 @@ def select_file(contents, filename):
                                     }],
                             ),
                             style={
-                                'width': '50%',
+                                'width': '48%',
                                 'display': 'inline-block'
                             }),
-
-                            # guiding text for summary statistics
-                            html.Div(
-                                [
-                                    html.H3('How to interpret summary statistics'),
-                                    html.Strong('Mean: '),
-                                    html.Span(strings.mean_explanation),
-                                    html.Strong('Standard Deviation: '),
-                                    html.Span(strings.stdDev_explanation),
-                                    html.Strong('Coefficient of Variation: '),
-                                    html.Span(strings.coefV_explanation),
-                                    html.Strong('Inter-Quartile Range: '),
-                                    html.Span(strings.iqr_explanation)
-                                ],
-                                style={
-                                    'whiteSpace': 'pre-line',
-                                    'width': '50%',
-                                    'display': 'inline-block',
-                                    'float': 'right'
-                                })
                         ])
         except ValueError as error: #NameError?, ValueError?, EOFError?, RuntimeError?
             print('Program error:')

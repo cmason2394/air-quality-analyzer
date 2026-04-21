@@ -3,9 +3,13 @@ __pycache__
 *.env
 *.pyc 
 */tempCodeRunnerFile.py 
+tempCodeRunnerFile.py
 *.log
 *.venv/
 *vscode/
+*.mp4
+*.mov
+*.avi
 
 
 

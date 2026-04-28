@@ -204,7 +204,17 @@ def change_time_unit(time: float) -> tuple[float, str]:
     return time, unit
 
 # determine the length of time between samples taken
-def find_interval(time_series):
+def find_interval(time_series: pd.Series) -> int | None:
+    """
+    Determine how often the sensor is measuring data.
+
+    Args:
+        time_series (pd.Series): column in the recorded data keeping track of Unix Time
+
+    Returns:
+        int: the average length of time in seconds between samples logged by the sensor.
+        Returns None if there are fewer than 10 recorded entries.
+    """
     try:
         log_interval = (time_series.iloc[99] - time_series.iloc[0]) / 100
         return log_interval

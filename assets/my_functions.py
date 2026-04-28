@@ -174,7 +174,23 @@ def filter_list(dataframe: pd.DataFrame, variable_list: list[str], column_name: 
     return filtered
 
 # change time in seconds variables to appropriate units
-def change_time_unit(time):
+def change_time_unit(time: float) -> tuple[float, str]:
+    """
+    Convert a time value in seconds to the most readable unit. 
+
+    Converts seconds to minutes, hours, or days depending on magnitude,
+    rounding to one decimal place.
+
+    Args:
+        time (float): time in seconds
+
+    Returns:
+        tuple[float, str]: (converted_time, unit) where unit is one of 's', 'min', 'hrs', 'days'
+
+    Example:
+        >>> change_time_unit(3700)
+        (1.0, 'hrs')
+    """
     unit = 's'
     if time >= 60:  # more than 60 seconds
         time = round(time / 60, 1)  #minutes

@@ -76,9 +76,8 @@ def select_file(contents, filename):
         # load file as string
         global text
         text = "\n".join([line for line in raw_content.splitlines() if line.strip() != ''])  # remove empty lines
-        #text = mf.remove_empty_lines(file_content.read())
         file_content.seek(0)  # reset file pointer to the beginning
-        print(f'text data type: {type(text)} and content: {text}')
+        #print(f'text data type: {type(text)} and content: {text}')
         
         # check to see if the file is in a format this program can analyze
         try:

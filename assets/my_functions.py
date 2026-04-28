@@ -289,7 +289,22 @@ def scrub_gps(filepath: str) -> tuple[str, pd.DataFrame]:
     return header_string, df
 
 # go through header data to see if there is anything weird about the file
-def on_load(string, time_series):
+def on_load(string: str, time_series: pd.Series) -> list[str]:
+    """
+    Perform completness and reliability checks on a newly loaded log file.
+    
+    Examines the header section of the file for signs of incomplete runtimes,
+    device malfunction, or data inconsistencies. Checks include shutdown mode,
+    runtime comparisons, battery levels, and compares programmed values to actual values.
+
+    Args:
+        string (str): The full raw text of the log file.
+        time_series (pd.Series): column in the recorded data keeping track of Unix Time,
+        used to calculate actual study duration and actual log interval.
+
+    Returns:
+        list[str]: list of human-readable alert messages describing any issues found.
+    """
     temp_array = []
 
     # split string to just the header section of the file

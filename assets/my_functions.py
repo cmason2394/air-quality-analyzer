@@ -227,20 +227,39 @@ def find_interval(time_series: pd.Series) -> int | None:
 
 
 # determine length of study
-def find_study_length(time_series):
+def find_study_length(time_series: pd.Series) -> int:
+    """Determine how long the sensor ran for."""
     study_period = time_series.iloc[time_series.size - 1] - time_series.iloc[0]
     print(study_period)
     return study_period
 
 # alter a gps coordinate to protect privacy
-def scrub(num, c):
+def scrub(num: float, c: float) -> float:
+    """
+    Alter a number.
+
+    If a number is not defined (-9999), then it is not changed.
+    """
     if num == -9999:
         return num
     else:
         return num + c
 
 # randomly alter gps latitude and longitude to protect privacy
-def scrub_gps(filepath):
+def scrub_gps(filepath: str) -> tuple[str, pd.DataFrame]:
+    """
+    Randomly alter GPS latitude and longitude to protect privacy.
+
+    This function was used on the example data files accessible in the directory.
+    It is not actively used while running app.py.
+
+    Args:
+        filepath (str): filepath pointing to a csv file to alter.
+
+    Returns: 
+        tuple[str, pd.Dataframe]: (header section of file, table section of file) with 
+        table columns with altered GPS values (consistently altered for each file).
+    """
     #save as a string
     with open(filepath, 'r') as file:
         text = file.read()
@@ -269,7 +288,7 @@ def scrub_gps(filepath):
     
     return header_string, df
 
-# go through header data to see if there is anything wierd about the file
+# go through header data to see if there is anything weird about the file
 def on_load(string, time_series):
     temp_array = []
 

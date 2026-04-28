@@ -8,30 +8,46 @@ import random
 print('entered my functions module!')
 
 # function to determine if there is a decimal digit in a string
-def contains_number(input_string):
+def contains_number(input_string: str) -> bool:
+    """Check a string for at least one instance of a number (decimal digit)."""
     return bool(re.search(r'\d', input_string))
 
 # determine if a string contains characters
-def contains_letter(input_string):
+def contains_letter(input_string: str) -> bool:
+    """Check a string for at least one instance of a letter."""
     return bool(re.search(r'\D', input_string))
 
 # Split a string into its lines
-def split_into_rows(string):
+def split_into_rows(string: str) -> list[str]:
+    """Split a string into its rows and remove empty rows."""
     row_list = re.split(r'[\r\n]', string)
     no_empty_rows_list = [row for row in row_list if row]
     return no_empty_rows_list
 
 # Split a line into it's cells
-def split_into_cells(row):
+def split_into_cells(row: str) -> list[str]:
+    """Split a row on every comma to get a list of the cells in that row."""
     cell_list = re.split(',', row)
     return cell_list
 
 # remove empty lines from a string. 
-def remove_empty_lines(string):
+def remove_empty_lines(string: str) -> str:
+    """Remove empty lines from a string."""
     return re.sub(r'\n+', '\n', string).strip('\n')
 
 # Search for a substring and return the line it is on
-def search(string, search_substring):
+def search(string: str, search_substring: str) -> int | None:
+    """
+    Search for a substring in a string and return the line of the string it is on. If the substring is not found, print a message.
+    
+    Args:
+        string (str): The string to search through.
+        search_substring (str): The substring to search for.
+
+    Returns:
+        int: The index of the line containing the substring.
+        Returns None and a terminal message if search was unsuccessful. 
+    """
     row_list = split_into_rows(string)
     row_index = 0
     for line in row_list:
@@ -45,7 +61,19 @@ def search(string, search_substring):
         print(f'{search_substring} not found')
 
 # Pull out the value associated with a variable in the header section of the file
-def pull_value(string, variable):
+def pull_value(string: str, variable: str) -> str | None:
+    """
+    Pull out the value associated with a variable in the header section of the file.
+
+    Args:
+        string (str): The string to search through.
+        variable (str): The variable to search for.
+
+    Returns:
+        str: The raw string value associated with the variable.
+        Returns None and a terminal message if the variable has no associated value (defined as containing at least 1 number/digit).
+        Callers are responsible for converting to numeric type if needed.
+    """
     row = search(string, variable)
     cell_list = split_into_cells(row)
     cell_index = cell_list.index(variable) + 1
@@ -55,35 +83,61 @@ def pull_value(string, variable):
         print(f'{variable} does not have an associated value.')
 
 # Find the start of a table
-def find_table_start(string, search_phrase):
+def find_table_start(string: str, search_phrase: str) -> int | None:
+    """
+    Find the index of the row that is the start of a table within a string. 
+
+    Where the start of the table has a row for units, followed by a row for column headers, followed by the first row of data.
+    Where data is floating point numbers. If the search phrase is found and the following rows match the expected format, return the index of the starting row of the table.
+    
+
+    Args:
+        string (str): The string to search through.
+        search_phrase (str): The phrase to search for.
+
+    Returns:
+        int: The index of the row that is the start of the table.
+        Returns None and a terminal message if the start of the table was not found.
+    """
     row_list = split_into_rows(string)
-    print(f'row_list: {row_list}')
+    #print(f'row_list: {row_list}')
 
     try:
         start_row = row_list.index(search(string, search_phrase))
-        print(f'start_row index: {start_row}')
-        content_start_row = row_list[start_row]
-        print(f'start_row contents: {content_start_row} and type: {type(content_start_row)}')
-        print(f'number of columns: {content_start_row.count(",") + 1}')
+        #print(f'start_row index: {start_row}')
+        #content_start_row = row_list[start_row]
+        #print(f'start_row contents: {content_start_row} and type: {type(content_start_row)}')
+        #print(f'number of columns: {content_start_row.count(",") + 1}')
     except ValueError as error:
         print(f'Error finding search_phrase "{search_phrase}": {error}')
         return -1
     
     next_row = row_list[start_row + 1]
-    print(f'next_row: {next_row}')
+    #print(f'next_row: {next_row}')
     third_row = row_list[start_row + 2]
-    print(f'third_row: {third_row}')
-    print(f'first character in next_row: {next_row[0]}')
-    print(f'first character in third_row: {third_row[0]}')
+    #print(f'third_row: {third_row}')
+    #print(f'first character in next_row: {next_row[0]}')
+    #print(f'first character in third_row: {third_row[0]}')
 
     if contains_letter(next_row[0]) and contains_number(third_row[0]):
         return start_row
     else:
         print(f'{start_row} is not the start of this table')
-        return -1
+        return None
 
 # Find and replace a phrase
-def find_and_replace(string, keyword_list, keyword_replacement_list):
+def find_and_replace(string: str, keyword_list: pd.Series, keyword_replacement_list: pd.Series) -> str:
+    """
+    Find and replace keywords with more readable names for the keyword.
+
+    Args:
+        string (str): the string to search through.
+        keyword_list (pd.Series): the original keywords in the string that we want to replace.
+        keyword_replacement_list (pd.Series): the new, more readable keywords that map to the original keywords.
+
+    Returns:
+        str: the string with the replaced keywords
+    """
     i = 0
     new_string = string
     for keyword in keyword_list:
@@ -94,11 +148,27 @@ def find_and_replace(string, keyword_list, keyword_replacement_list):
 
 # scalar function to determine amount to increase an upper bound pulled from file header
 # multiply by 20%, or + integer, whichever is greater.
-def create_scalar(value):
+def create_scalar(value: float) -> float:
+    """
+    Increase an upper bound on a measured metric to flag values above the upper bound as suspicious.
+    
+    Note: not used in this project yet. Future way to more dynamically assign bounds.
+    """
     return max(value * 1.2, value + 0.1)
 
 # Create sub-list
-def filter_list(dataframe, variable_list, column_name):
+def filter_list(dataframe: pd.DataFrame, variable_list: list[str], column_name: str) -> pd.DataFrame:
+    """
+    Create a sub-dataframe of specific variables from a larger dataframe.
+
+    Args:
+        dataframe (pd.Dataframe): original dataframe to search through.
+        variable_list (list[str]): list of the variables to include in the filtered dataframe.
+        column_name (str): The name of the column to search for matches against variable_list. Rows in the dataframe where this column's value appears in variable_list are kept in the returned dataframe.
+
+    Returns:
+        pd.Dataframe: dataframe filtered to only include variables from the specified list that appear in the specified column.
+    """
     filtered = dataframe[dataframe[column_name].isin(variable_list)].reset_index()
     del filtered['index']
     return filtered
@@ -302,8 +372,8 @@ def on_load(string, time_series):
 
 # Alert if variable is outside of acceptable bounds
 def check_bounds(boundary_dataframe, variable_list, column_name,
-                 raw_data_dataframe, time_series, keyword_dataframe,
-                 keyword_replacements_dataframe, string):
+                 raw_data_dataframe, time_series, keyword_dataseries,
+                 keyword_replacements_dataseries, string):
     filtered_boundaries = filter_list(
         boundary_dataframe, variable_list, column_name
     )  # make a smaller dataframe of only the variables of interest.
@@ -365,7 +435,7 @@ def check_bounds(boundary_dataframe, variable_list, column_name,
             temp_array.append(
                 find_and_replace(
                     f'{variable} was below the expected range for {time_low[0]} {time_low[1]} and above the expected range for {time_high[0]} {time_high[1]} out of {study_period[0]} {study_period[1]}.\n',
-                    keyword_dataframe, keyword_replacements_dataframe))
+                    keyword_dataseries, keyword_replacements_dataseries))
 
             flag_array.append({
                 'Variable': variable,

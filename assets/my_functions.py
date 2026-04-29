@@ -164,7 +164,8 @@ def filter_list(dataframe: pd.DataFrame, variable_list: list[str], column_name: 
     Args:
         dataframe (pd.Dataframe): original dataframe to search through.
         variable_list (list[str]): list of the variables to include in the filtered dataframe.
-        column_name (str): The name of the column to search for matches against variable_list. Rows in the dataframe where this column's value appears in variable_list are kept in the returned dataframe.
+        column_name (str): The name of the column to search for matches against variable_list.
+        Rows in the dataframe where this column's value appears in variable_list are kept in the returned dataframe.
 
     Returns:
         pd.Dataframe: dataframe filtered to only include variables from the specified list that appear in the specified column.
@@ -207,6 +208,10 @@ def change_time_unit(time: float) -> tuple[float, str]:
 def find_interval(time_series: pd.Series) -> int | None:
     """
     Determine how often the sensor is measuring data.
+
+    It first calculates the average interval between taking samples using 100 rows of data.
+    If there are fewer than 100 rows of data, it calculates the average log interval with 10 rows.
+    If there are fewer than 10 rows, it prints an Index Error to the terminal.
 
     Args:
         time_series (pd.Series): column in the recorded data keeping track of Unix Time
@@ -431,14 +436,33 @@ def on_load(string: str, time_series: pd.Series) -> list[str]:
 
 
 # Alert if variable is outside of acceptable bounds
-def check_bounds(boundary_dataframe, variable_list, column_name,
-                 raw_data_dataframe, time_series, keyword_dataseries,
-                 keyword_replacements_dataseries, string):
+def check_bounds(boundary_dataframe: pd.DataFrame, variable_list: list[str], column_name: str,
+                 raw_data_dataframe: pd.DataFrame, time_series: pd.Series, keyword_dataseries: pd.Series,
+                 keyword_replacements_dataseries: pd.Series, string: str) -> tuple[list[str], pd.DataFrame]:
+    """
+    Alert the user if a measured variable is outside of an acceptable range.
+
+    Args:
+        boundary_dataframe (pd.Dataframe): table of variables with their associated lower and upper limits.
+        variable_list (list[str]): list of variables to check.
+        column_name (str): The name of the column to search for matches against variable_list.
+        Rows in the dataframe where this column's value appears in variable_list are kept in the returned dataframe.
+        raw_data_dataframe (pd.Dataframe): The dataframe to compare raw data values to the lower and upper limits for each variable.
+        time_series (pd.Series): column in the recorded data keeping track of Unix Time,
+        used to calculate actual study duration and actual log interval.
+        keyword_dataseries (pd.Series): a list of variable names from the log file that we want to replace with more understandable names.
+        keyword_replacements_dataseries (pd.Series): the new, more readable variable names that map to the original variable names.
+        string (str): The full raw text of the log file. Used to find the programmed log interval in the header section in case the calculated log interval cannot be calculated.
+
+    Returns:
+        tuple[list[str], pd.Dataframe]: (temp_array, df) list of human-readable alert messages for the length of time a variable was below or above its expected range.
+        The df is a dataframe of dictionaries for each variable assessed.
+    """
     filtered_boundaries = filter_list(
         boundary_dataframe, variable_list, column_name
     )  # make a smaller dataframe of only the variables of interest.
-    print(f'FILTERED BOUNDARY DATAFRAME: {filtered_boundaries}')
-    print(type(filtered_boundaries))
+    #print(f'FILTERED BOUNDARY DATAFRAME: {filtered_boundaries}')
+    #print(type(filtered_boundaries))
 
     log_interval = find_interval(time_series)
     study_period = change_time_unit(find_study_length(time_series))
@@ -449,14 +473,14 @@ def check_bounds(boundary_dataframe, variable_list, column_name,
     for index, row in filtered_boundaries.iterrows(
     ):  # go over inputted variables
         variable = filtered_boundaries.iloc[index, 0]
-        print(F'!VARIABLE!: {variable}, type: {type(variable)}\n')
+        #print(F'!VARIABLE!: {variable}, type: {type(variable)}\n')
 
         low_limit = filtered_boundaries.iloc[
             index, 1]  #pull the low and high limits from the csv.
-        print(F'!LOW LIMIT!: {low_limit}, type: {type(low_limit)}\n')
+        #print(F'!LOW LIMIT!: {low_limit}, type: {type(low_limit)}\n')
 
         high_limit = filtered_boundaries.iloc[index, 2]
-        print(F'!HIGH LIMIT!: {high_limit}, type: {type(high_limit)}\n')
+        #print(F'!HIGH LIMIT!: {high_limit}, type: {type(high_limit)}\n')
 
         if low_limit is None or math.isnan(
                 low_limit):  #check to make sure the limits exist
@@ -470,7 +494,7 @@ def check_bounds(boundary_dataframe, variable_list, column_name,
             if type(high_limit) == str and contains_number(high_limit):
                 high_limit = float(high_limit)
 
-            print(f'after conversion: {type(low_limit)}, {type(high_limit)}')
+            #print(f'after conversion: {type(low_limit)}, {type(high_limit)}')
 
             count_low = 0
             count_high = 0

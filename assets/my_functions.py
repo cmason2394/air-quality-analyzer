@@ -1,6 +1,7 @@
 #FUNCTIONS FOR PROJECT
 import re
 import plotly.express as px
+import plotly.graph_objects as go
 import math
 import pandas as pd
 import random
@@ -592,10 +593,26 @@ def highlight_rows(row, bounds_dataframe):
         return {'backgroundColor': 'white'}
 
 # CALCULATE SUMMARY STATISTICS
-def summary_stats(dataframe, variable_list, bounds_dataframe, keyword_list, keyword_replacement_list):
+def summary_stats(dataframe: pd.DataFrame, variable_list: list[str], bounds_dataframe: pd.DataFrame, keyword_list: pd.Series, keyword_replacement_list: pd.Series) -> pd.DataFrame:
+    """
+    Calculate summary statistics for selected variables.
+
+    Included summary statistics are the mean, standard deviation, coefficient of Variation, and inter-quartile range.
+
+    Args:
+        dataframe (pd.Dataframe): original dataframe to search through for selected variables.
+        variable_list (list[str]): list of variables for which to find their summary statistics.
+        bounds_dataframe (pd.Dataframe): Dataframe of the lower and upper limits for each variable.
+        keyword_list (pd.Series): a list of variable names from the log file that we want to replace with more understandable names.
+        keyword_replacement_list (pd.Series): the new, more readable variable names that map to the original variable names.
+
+    Returns:
+        pd.Dataframe: Returns a dataframe with columns 'Variable', 'Mean', 'Standard Deviation', 'Coefficient of Variation', 'Inter-Quartile Range', and 'beyondLimit'.
+            beyondLimit is a boolean value indicating if the variable was flagged for values out of its range.
+    """
     filtered_list = dataframe[variable_list]
-    print(filtered_list)
-    print(type(filtered_list))
+    #print(filtered_list)
+    #print(type(filtered_list))
     temp_array = []
 
     for variable in filtered_list:
@@ -618,13 +635,28 @@ def summary_stats(dataframe, variable_list, bounds_dataframe, keyword_list, keyw
         })
 
     df = pd.DataFrame(temp_array)
-    print(df)
+    #print(df)
 
     return df
 
 
 # SCATTERPLOT FUNCTION
-def update_scatterplot(dataframe, selected_variables, selected_time_series):
+def update_scatterplot(dataframe: pd.DataFrame, selected_variables: list[str], selected_time_series: str) -> go.Figure:
+    """
+    Generate a scatterplot of selected variables over a selected time format.
+
+    Args:
+        dataframe (pd.Dataframe): original dataframe to search through for selected variables.
+        selected_variables (list[str]): Variables to plot on the y-axis, 
+            selected from a dropdown.
+        selected_time_series (str): the column name of the time series to use as the x-axis.
+            Determines which timestamp representation the scatterplot is plotted against.
+            One of 'SampleTime', 'UTCDateTime', or 'LocalDateTime'.
+            Each represents the same study period in a different time format.
+
+    Returns:
+        go.Figure: a Plotly scatter figure.
+    """
     fig = px.scatter(
         dataframe,
         x=selected_time_series,

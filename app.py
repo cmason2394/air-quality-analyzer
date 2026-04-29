@@ -152,7 +152,7 @@ def select_file(contents, filename):
 
 
             #print stuff to terminal to know better what is going on
-            print(mf.summary_stats(df_believable, ['VolumetricFlowRate'], df_bounds, ds_keywords, ds_replacements))
+            #print(mf.summary_stats(df_believable, ['VolumetricFlowRate'], df_bounds, ds_keywords, ds_replacements))
 
             return html.Div(
                 id='file_info_container',

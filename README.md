@@ -92,6 +92,18 @@ Researchers can quickly determine if a study ran short, if the device died or ma
 - Dash
 
 
+## **Project Structure**
+- `app.py` - main Dash application
+- `assets/boundary_numbers.csv` - expected lower and upper limits for each measured variable.
+- `assets/glossary.csv` - maps raw variable names and units to human readable names and descriptions
+- `assets/my_constants.py` - values for common constants, such as air pressure at sea level
+- `assets/my_functions.py` - data processing and analysis functions
+- `assets/my_strings.py` - stores string values for title, explanation, etc.
+- `example_data/` - sample log files for testing project
+- `LICENSE` - MIT license
+- `requirements.txt` - Python dependencies
+
+
 ## **Future Features**
 
 - **More QA/QC checks**: a function that alerts researchers to long periods where the device read 0, or the exact same value, indicating possible sensor failure. 

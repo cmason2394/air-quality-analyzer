@@ -446,17 +446,20 @@ def check_bounds(boundary_dataframe: pd.DataFrame, variable_list: list[str], col
         boundary_dataframe (pd.Dataframe): table of variables with their associated lower and upper limits.
         variable_list (list[str]): list of variables to check.
         column_name (str): The name of the column to search for matches against variable_list.
-        Rows in the dataframe where this column's value appears in variable_list are kept in the returned dataframe.
+            Rows in the dataframe where this column's value appears in variable_list are kept in the returned dataframe.
         raw_data_dataframe (pd.Dataframe): The dataframe to compare raw data values to the lower and upper limits for each variable.
         time_series (pd.Series): column in the recorded data keeping track of Unix Time,
-        used to calculate actual study duration and actual log interval.
+            used to calculate actual study duration and actual log interval.
         keyword_dataseries (pd.Series): a list of variable names from the log file that we want to replace with more understandable names.
         keyword_replacements_dataseries (pd.Series): the new, more readable variable names that map to the original variable names.
         string (str): The full raw text of the log file. Used to find the programmed log interval in the header section in case the calculated log interval cannot be calculated.
 
     Returns:
-        tuple[list[str], pd.Dataframe]: (temp_array, df) list of human-readable alert messages for the length of time a variable was below or above its expected range.
-        The df is a dataframe of dictionaries for each variable assessed.
+        tuple[list[str], pd.Dataframe]: 
+            - list[str]: human-readable alert messages describing how long each variable was below or above its expected range.
+            - pd.Dataframe: One row per variable assessed, with columns:
+                'Variable', 'Time below limit', 'time above limit', 'study period'.
+                Time values are tuples of (value, unit) from the change_time_unit() method.
     """
     filtered_boundaries = filter_list(
         boundary_dataframe, variable_list, column_name
@@ -537,7 +540,11 @@ def check_bounds(boundary_dataframe: pd.DataFrame, variable_list: list[str], col
     return temp_array, df
 
 # function to see if a sensor was out of range
-def is_out_of_bounds(dataframe, variable):
+def is_out_of_bounds(dataframe: pd.DataFrame, variable: str) -> bool:
+    """
+    Boolean check if a variable was out of range
+    Note: still working on this function, going to use for highlighting rows function which is not yet working.
+    """
     out = False
     df = dataframe.set_index('Variable')
 
@@ -551,7 +558,11 @@ def is_out_of_bounds(dataframe, variable):
 
     return out
 
-def is_out_of_bounds_loop(dataframe, variable_list, column_name):
+def is_out_of_bounds_loop(dataframe: pd.DataFrame, variable_list: list[str], column_name: str) -> list[bool]:
+    """
+    Boolean check on multiple variables to see if they went out of range during the study period
+    Note: still working on this function, going to use for highlighting rows function which is not yet working.
+    """
     #filter bounds dataframe for variables in list. Loop through dataframe to check if variable was out of bounds and add the answer to a list. for index, row in dataframe.iterrows():
     df = filter_list(dataframe, variable_list, column_name) #.set_index('Variable')
     temp_list = []
@@ -568,10 +579,14 @@ def is_out_of_bounds_loop(dataframe, variable_list, column_name):
     return temp_list
 
 # function to highlight rows in stats table based on flags
-def highlight_rows(row):
+def highlight_rows(row, bounds_dataframe):
+    """
+    Highlight rows in the summary_stats table if a variable in it was flagged for being out of range.
+    Note: still working on this function, not yet working.
+    """
     variable = row['Variable']
     print(f'ENTERED HIGHLIGHT_ROWS FUNCTION. ROW VARIABLE: {variable}')
-    if is_out_of_bounds(df_bounds, variable):
+    if is_out_of_bounds(bounds_dataframe, variable):
         return {'backgroundColor': '#E9D502'}
     else:
         return {'backgroundColor': 'white'}

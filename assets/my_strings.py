@@ -1,4 +1,6 @@
-print('entered my strings module!')
+""" Module for storing strings used across the project. """
+
+#print('entered my strings module!')
 
 title = 'Air Quality Data'
 welcome = 'Welcome to the air quality data visualization page.'

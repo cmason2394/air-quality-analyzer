@@ -1,4 +1,5 @@
 #GLOBAL CONSTANTS
+""" Global constants used across multiple files in the project. """
 
 # constants associated with upper and lower bounds on environmental and sensor conditions
 # degrees Celcius

@@ -1,3 +1,6 @@
+"""Main application file for the air quality data analysis dashboard. Contains the layout of the dashboard and callback functions for interactivity. Stores structured data used to build the dashboard."""
+
+# import necessary libraries
 import dash
 from dash import dcc, html, dash_table
 from dash.dependencies import Input, Output, State

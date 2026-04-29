@@ -1,4 +1,7 @@
 #FUNCTIONS FOR PROJECT
+""" Functions for loading, processing, and analyzing data from the air quality log files. """
+
+#import necessary libraries
 import re
 import plotly.express as px
 import plotly.graph_objects as go
@@ -36,17 +39,17 @@ def remove_empty_lines(string: str) -> str:
     """Remove empty lines from a string."""
     return re.sub(r'\n+', '\n', string).strip('\n')
 
-# Search for a substring and return the line it is on
-def search(string: str, search_substring: str) -> int | None:
+# Search for a substring and returns the contents of the line it is on
+def search(string: str, search_substring: str) -> str | None:
     """
-    Search for a substring in a string and return the line of the string it is on. If the substring is not found, print a message.
+    Search for a substring in a string and return the contents of the line of the string it is on.
     
     Args:
         string (str): The string to search through.
         search_substring (str): The substring to search for.
 
     Returns:
-        int: The index of the line containing the substring.
+        str: The contents of the entire line containing the substring.
         Returns None and a terminal message if search was unsuccessful. 
     """
     row_list = split_into_rows(string)
@@ -111,7 +114,7 @@ def find_table_start(string: str, search_phrase: str) -> int | None:
         #print(f'number of columns: {content_start_row.count(",") + 1}')
     except ValueError as error:
         print(f'Error finding search_phrase "{search_phrase}": {error}')
-        return -1
+        return None
     
     next_row = row_list[start_row + 1]
     #print(f'next_row: {next_row}')
@@ -309,7 +312,7 @@ def on_load(string: str, time_series: pd.Series) -> list[str]:
         used to calculate actual study duration and actual log interval.
 
     Returns:
-        list[str]: list of human-readable alert messages describing any issues found.
+        list[str]: list of human-readable alert messages describing the shutdown mode and any issues found.
     """
     temp_array = []
 
@@ -318,7 +321,7 @@ def on_load(string: str, time_series: pd.Series) -> list[str]:
 
     if end_index != -1:
         header = string[0:end_index]
-    print(f'HEADER STRING: {header}')
+    #print(f'HEADER STRING: {header}')
 
     # pull out necessary values
     sdm = int(pull_value(header, 'ShutdownMode'))
@@ -346,7 +349,7 @@ def on_load(string: str, time_series: pd.Series) -> list[str]:
 
 
     #look at shutdown mode
-    print(f'SHUTDOWN-MODE: {sdm}, {type(sdm)}')
+    #print(f'SHUTDOWN-MODE: {sdm}, {type(sdm)}')
     if sdm != 3:
         temp_array.append('Device did not shut down correctly. Reason: ')
     if sdm == 0:
@@ -459,7 +462,7 @@ def check_bounds(boundary_dataframe: pd.DataFrame, variable_list: list[str], col
         tuple[list[str], pd.Dataframe]: 
             - list[str]: human-readable alert messages describing how long each variable was below or above its expected range.
             - pd.Dataframe: One row per variable assessed, with columns:
-                'Variable', 'Time below limit', 'time above limit', 'study period'.
+                'Variable', 'Time below limit', 'Time above limit', 'Study Period'.
                 Time values are tuples of (value, unit) from the change_time_unit() method.
     """
     filtered_boundaries = filter_list(

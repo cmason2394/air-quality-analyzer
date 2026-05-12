@@ -14,18 +14,18 @@ from assets import my_strings as strings
 import base64
 import io
 
-# Initialize global variables
-file_path = ""
-df_relevant = []
-df_believable = []
-df_units = []
-#stats = []
-bounds = ()
-ds_time = []
-df_boundary_numbers = pd.read_csv('assets/boundary_numbers.csv')  #relative file path
-df_dictionary = pd.read_csv('assets/glossary.csv', index_col='Variables')  #relative file path
-ds_keywords = df_dictionary.index.to_series()
-ds_replacements = df_dictionary['Readable Name']
+# Initialize global variables, stored at global scope to be used across multiple callback functions and avoid reloading dataframes and other variables multiple times.
+# These variables are updated in the first callback function when the user uploads a file, and then used in subsequent callbacks for the scatterplot, alert function, and summary statistics.
+file_path = "" #filepath of the uploaded file, stored as a string
+df_relevant = pd.DataFrame() # dataframe containing all relevant data for the project, excludes columns that are beyond the scope of this project. Rounded to 1 decimal place for easier interpretation and to avoid false precision.
+df_believable = pd.DataFrame() # dataframe of data that helps determine whether the data is believable (complete and accurate). Contains a subset of the columns in df_relevant related to device information and enviromental metrics.
+df_units = pd.DataFrame() # dataframe that contains the relevant variable names and their units of measurement
+bounds: tuple[list[str], pd.DataFrame] = ([], pd.DataFrame()) # tuple that contains an alert message and dataframe showing the user how long a variables was below and above its boundaries.
+ds_time = pd.Series(dtype=int) # pandas dataseries of integers containing Unix time values during the study, used to determine study length and how long a variable was beyond its boundaries. 
+df_boundary_numbers = pd.read_csv('assets/boundary_numbers.csv')  #relative file path # dataframe containing the upper and lower bounds for each variable, used in the alert function to determine whether a variable is beyond its boundaries.  
+df_dictionary = pd.read_csv('assets/glossary.csv', index_col='Variables')  #relative file path # dataframe containing the variable names, their units of measurement, and descriptions, used to create tooltips and make the dashboard more user-friendly by showing readable names instead of variable names.
+ds_keywords = df_dictionary.index.to_series() # pandas dataseries of the variable names from the glossary, used to replace variable names with readable names.
+ds_replacements = df_dictionary['Readable Name'] # pandas dataseries of the readable names from the glossary, used to replace variable names with readable names in the dashboard and make it more user-friendly.
 
 #print('my functions module', str(mf.find_table_start))
 #print(f'dictionary dataframe: {df_dictionary.head()}')
@@ -62,9 +62,8 @@ app.layout = html.Div([
 
 # first callback function when the user uploads a file
 @app.callback(Output("output", "children"),
-              [Input("upload-data", "contents")],
-              [State("upload-data", "filename")])
-def select_file(contents, filename):
+              [Input("upload-data", "contents")])
+def select_file(contents):
     print('in first callback')
     if contents is not None:
         # Decode the uploaded file contents
@@ -81,20 +80,20 @@ def select_file(contents, filename):
         text = "\n".join([line for line in raw_content.splitlines() if line.strip() != ''])  # remove empty lines
         file_content.seek(0)  # reset file pointer to the beginning
         #print(f'text data type: {type(text)} and content: {text}')
-        
+
         # check to see if the file is in a format this program can analyze
         try:
             print('in big try, except block')
             # find start of table
             table_start = mf.find_table_start(text, '(HH:MM:SS)') + 1
             print(f'Table starts at row: {table_start}')
-            
+
             # Preview the first few lines of the file to debug the structure
             preview_lines = mf.split_into_rows(text)[:10]
             print('Preview of the first 10 lines of the file:')
             for i, line in enumerate(preview_lines):
                 print(f'Line {i}: {line}')
-            
+
             # Print the lines after the table start row
             lines_after_start = mf.split_into_rows(text)[table_start:]
             print('Lines after the table start row:')
@@ -105,7 +104,7 @@ def select_file(contents, filename):
             #file_content.seek(0)
             df = pd.read_csv(io.StringIO(text), skiprows=table_start)
             #df = pd.read_csv(file_content, skiprows=table_start)
-            
+
             #close IO stream
             file_content.close()
 
@@ -118,8 +117,8 @@ def select_file(contents, filename):
             df_relevant = df.drop([
                 'FLOWCTL', 'GPSRT', 'SD_DATAW', 'SD_HEADW', 'PumpPow1', 'PumpPow2',
                 'SOC', 'PM1MCVar', 'PM2_5MCVar', 'PM4MCVar', 'PM10MCVar',
-                'PM0_5NCVar', 'PM1NCVar', 'PM2_5NCVar', 'PM4NCVar', 'PM10NCVar', 
-                'PMtypicalParticleSizeVar', 'AccelXVar', 'AccelYVar', 'AccelZVar', 
+                'PM0_5NCVar', 'PM1NCVar', 'PM2_5NCVar', 'PM4NCVar', 'PM10NCVar',
+                'PMtypicalParticleSizeVar', 'AccelXVar', 'AccelYVar', 'AccelZVar',
                 'RotXVar', 'RotYVar', 'RotZVar', 'BFGenergy'
             ],
                                 axis=1).round(1)
@@ -129,7 +128,7 @@ def select_file(contents, filename):
             df_units = pd.read_csv(io.StringIO(text),
                                 skiprows= table_start - 1,
                                 header=None,
-                                nrows=3).reindex([1, 0]).transpose() 
+                                nrows=3).reindex([1, 0]).transpose()
             df_units.columns = ['Variables', 'Units']
             df_units['Names and Units'] = df_units['Variables'] + df_units['Units']
             print(f' UNITS DATAFRAME: {df_units.head(20)}, column names: {df_units.columns.to_list()}, unit columns exists: {df_units.Units}')
@@ -175,10 +174,10 @@ def select_file(contents, filename):
                         data=df_relevant.to_dict('records'),
                         columns=[{
                             'id': col, #tried this code to make it an index I could reference in selecting columns, preventing any data from displaying in table
-                            'name': col, 
+                            'name': col,
                             #'selectable': True,
                             'hideable': True
-                        } for idx, col in enumerate(df_relevant.columns)], 
+                        } for idx, col in enumerate(df_relevant.columns)],
                         tooltip_header={i: df_dictionary['Description'][i] for i in df_relevant.columns},
                         virtualization=True,  #allows faster loading for large tables
                         #column_selectable = 'multi',
@@ -302,7 +301,7 @@ def select_file(contents, filename):
                                         'column_id': 'Variable',
                                     },
                                     'textAlign': 'left'
-                                }],  
+                                }],
 
                                 style_data_conditional=[{
                                         'if': {
@@ -406,4 +405,3 @@ if __name__ == "__main__":
     # Start Dash server in a separate thread
     dash_thread = threading.Thread(target=run_dash)
     dash_thread.start()
-

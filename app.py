@@ -20,9 +20,8 @@ file_path = "" #filepath of the uploaded file, stored as a string
 df_relevant = pd.DataFrame() # dataframe containing all relevant data for the project, excludes columns that are beyond the scope of this project. Rounded to 1 decimal place for easier interpretation and to avoid false precision.
 df_believable = pd.DataFrame() # dataframe of data that helps determine whether the data is believable (complete and accurate). Contains a subset of the columns in df_relevant related to device information and enviromental metrics.
 df_units = pd.DataFrame() # dataframe that contains the relevant variable names and their units of measurement
-bounds: tuple[list[str], pd.DataFrame] = ([], pd.DataFrame()) # tuple that contains an alert message and dataframe showing the user how long a variables was below and above its boundaries.
-ds_time = pd.Series(dtype=int) # pandas dataseries of integers containing Unix time values during the study, used to determine study length and how long a variable was beyond its boundaries. 
-df_boundary_numbers = pd.read_csv('assets/boundary_numbers.csv')  #relative file path # dataframe containing the upper and lower bounds for each variable, used in the alert function to determine whether a variable is beyond its boundaries.  
+ds_time = pd.Series(dtype=int) # pandas dataseries of integers containing Unix time values during the study, used to determine study length and how long a variable was beyond its boundaries.
+df_boundary_numbers = pd.read_csv('assets/boundary_numbers.csv')  #relative file path # dataframe containing the upper and lower bounds for each variable, used in the alert function to determine whether a variable is beyond its boundaries.
 df_dictionary = pd.read_csv('assets/glossary.csv', index_col='Variables')  #relative file path # dataframe containing the variable names, their units of measurement, and descriptions, used to create tooltips and make the dashboard more user-friendly by showing readable names instead of variable names.
 ds_keywords = df_dictionary.index.to_series() # pandas dataseries of the variable names from the glossary, used to replace variable names with readable names.
 ds_replacements = df_dictionary['Readable Name'] # pandas dataseries of the readable names from the glossary, used to replace variable names with readable names in the dashboard and make it more user-friendly.
@@ -32,7 +31,9 @@ ds_replacements = df_dictionary['Readable Name'] # pandas dataseries of the read
 #print(f'keywords: {ds_keywords.head()}')
 #print(f'readable names: {ds_replacements.head()}')
 
-# Initialize Dash app
+# Initialize Dash app and define app layout
+# Layout contains: title, welcome message, file upload button, and output div
+# Output div is populated dynamically by the select_file callback
 app = dash.Dash(__name__, suppress_callback_exceptions=True)
 
 #app title
@@ -63,7 +64,35 @@ app.layout = html.Div([
 # first callback function when the user uploads a file
 @app.callback(Output("output", "children"),
               [Input("upload-data", "contents")])
-def select_file(contents):
+def select_file(contents: str):
+    """
+    Callback function that is triggered when the user uploads a file. 
+    
+    Attempts to parse and process the uploaded file, returning an error message if the file format is not supported or cannot be read.
+    If supported and readable, it processes the data and updates the dashboard with the relevant information. 
+
+    Args:
+        contents (str): The contents of the uploaded file, encoded in base64.
+    
+    Returns:
+        A tuple of different HTML elements: 
+            html.Div: file information and results of the completeness checks. 
+            html.Div: a table of the study data. 
+            html.Div: radio buttons to select the time series for the scatterplot. 
+            html.Div: a dropdown menu to select the variables to inspect. 
+            dcc.Graph: a scatterplot of the selected variables.
+            html.Div: a section containing alert messages if any variables go beyond its boundaries, guiding text to explain how to interpret out of bounds flags, and a summary statistics table for the selected variables.
+
+        Returns html.Div containing an error message if the file format is not supported.
+        Returns an empty string if no file is uploaded.
+
+    Note:
+        Updates global variables: df_relevant, df_believable, df_units, ds_time, and text when a valid file is successfully loaded.
+        These are accessed by subsequent callbacks.
+    
+        The scatterplot, bounds alerts, and summary statistics table are initially populated with VolumetricFlowRate as the default variable.
+        These update dynamically when the user selects different variables from the dropdown.
+    """
     print('in first callback')
     if contents is not None:
         # Decode the uploaded file contents
@@ -73,11 +102,16 @@ def select_file(contents):
         file_content = io.StringIO(decoded.decode('utf-8'))
         raw_content = file_content.getvalue()
         file_content.seek(0)  # reset file pointer to the beginning
-        print(f'file_content data type: {type(file_content)}, content: {file_content} and raw content: {raw_content}')
+        print(
+            f'file_content data type: {type(file_content)}, content: {file_content} and raw content: {raw_content}'
+        )
 
         # load file as string
+        #TODO: store text in a dcc.Store rather than a global variable, or consider another option for storing the raw text data that is accessible across callbacks without needing to reload the file or reprocess the text data multiple times.
         global text
-        text = "\n".join([line for line in raw_content.splitlines() if line.strip() != ''])  # remove empty lines
+        text = "\n".join([
+            line for line in raw_content.splitlines() if line.strip() != ''
+        ])  # remove empty lines
         file_content.seek(0)  # reset file pointer to the beginning
         #print(f'text data type: {type(text)} and content: {text}')
 
@@ -87,18 +121,19 @@ def select_file(contents):
             # find start of table
             table_start = mf.find_table_start(text, '(HH:MM:SS)') + 1
             print(f'Table starts at row: {table_start}')
-
-            # Preview the first few lines of the file to debug the structure
+            '''# Preview the first few lines of the file to debug the structure
             preview_lines = mf.split_into_rows(text)[:10]
             print('Preview of the first 10 lines of the file:')
             for i, line in enumerate(preview_lines):
                 print(f'Line {i}: {line}')
-
+            '''
+            '''
             # Print the lines after the table start row
             lines_after_start = mf.split_into_rows(text)[table_start:]
             print('Lines after the table start row:')
             for i, line in enumerate(lines_after_start[:10]):
                 print(f'Line {i + table_start}: {line}')
+            '''
 
             # Load the selected file as a DataFrame
             #file_content.seek(0)
@@ -112,46 +147,62 @@ def select_file(contents):
             print(f'DataFrame columns: {df.columns}')
             print(f'DataFrame head: {df.head()}')
 
-
+            
+            #TODO: use dcc.Store for df_relevant rather than global variable
             global df_relevant
             df_relevant = df.drop([
-                'FLOWCTL', 'GPSRT', 'SD_DATAW', 'SD_HEADW', 'PumpPow1', 'PumpPow2',
-                'SOC', 'PM1MCVar', 'PM2_5MCVar', 'PM4MCVar', 'PM10MCVar',
-                'PM0_5NCVar', 'PM1NCVar', 'PM2_5NCVar', 'PM4NCVar', 'PM10NCVar',
-                'PMtypicalParticleSizeVar', 'AccelXVar', 'AccelYVar', 'AccelZVar',
-                'RotXVar', 'RotYVar', 'RotZVar', 'BFGenergy'
+                'FLOWCTL', 'GPSRT', 'SD_DATAW', 'SD_HEADW', 'PumpPow1',
+                'PumpPow2', 'SOC', 'PM1MCVar', 'PM2_5MCVar', 'PM4MCVar',
+                'PM10MCVar', 'PM0_5NCVar', 'PM1NCVar', 'PM2_5NCVar',
+                'PM4NCVar', 'PM10NCVar', 'PMtypicalParticleSizeVar',
+                'AccelXVar', 'AccelYVar', 'AccelZVar', 'RotXVar', 'RotYVar',
+                'RotZVar', 'BFGenergy'
             ],
-                                axis=1).round(1)
+                                  axis=1).round(1)
 
             # store a dataframe that contains the relevant variable names and their units of measurement
+            #TODO: use dcc.Store for df_units rather than global variable
             global df_units
-            df_units = pd.read_csv(io.StringIO(text),
-                                skiprows= table_start - 1,
-                                header=None,
-                                nrows=3).reindex([1, 0]).transpose()
+            df_units = pd.read_csv(
+                io.StringIO(text),
+                skiprows=table_start -
+                1,  #units are listed in the row above the table start row
+                header=None,
+                nrows=3).reindex([1, 0]).transpose()
             df_units.columns = ['Variables', 'Units']
-            df_units['Names and Units'] = df_units['Variables'] + df_units['Units']
-            print(f' UNITS DATAFRAME: {df_units.head(20)}, column names: {df_units.columns.to_list()}, unit columns exists: {df_units.Units}')
+            df_units[
+                'Names and Units'] = df_units['Variables'] + df_units['Units']
+            print(
+                f' UNITS DATAFRAME: {df_units.head(20)}, column names: {df_units.columns.to_list()}, unit columns exists: {df_units.Units}'
+            )
 
+            #TODO: use dcc.Store for df_believable rather than global variable
             global df_believable
             df_believable = df_relevant[[
                 'UnixTime', 'SampleTime', 'DateTimeUTC', 'DateTimeLocal',
-                'VolumetricFlowRate', 'AtmoT', 'PumpT', 'FdpT', 'BattT', 'AccelT',
-                'AtmoP', 'PumpP', 'FdPdP', 'PumpRH', 'AtmoRho', 'PumpV',
-                'MassFlow', 'BFGvolt', 'TPumpsON', 'TPumpsOFF'
+                'VolumetricFlowRate', 'AtmoT', 'PumpT', 'FdpT', 'BattT',
+                'AccelT', 'AtmoP', 'PumpP', 'FdPdP', 'PumpRH', 'AtmoRho',
+                'PumpV', 'MassFlow', 'BFGvolt', 'TPumpsON', 'TPumpsOFF'
             ]]
 
+           #TODO: use dcc.Store for ds_time rather than global variable
             global ds_time
             ds_time = df_believable['UnixTime']
-            print(ds_time)
+            #print(ds_time)
 
-            bounds = mf.check_bounds(df_boundary_numbers, ['VolumetricFlowRate'],
-                                    'VARIABLE', df_believable, ds_time,
-                                    ds_keywords, ds_replacements, text)
-            df_bounds = bounds[1]
+            # tuple that contains an alert message and dataframe showing the user how long a variables was below and above its boundaries.
+            # initially populate with VolumetricFlowRate as the default variable, then update dynamically when the user selects different variables from the dropdown.
+            bounds = mf.check_bounds(df_boundary_numbers,
+                                     ['VolumetricFlowRate'], 'VARIABLE',
+                                     df_believable, ds_time, ds_keywords,
+                                     ds_replacements, text)
+            df_bounds = bounds[
+                1]  # the second part of the tuple, a pandas dataframe
 
-            df_stats = mf.summary_stats(df_believable, ['VolumetricFlowRate'], df_bounds, ds_keywords, ds_replacements)
-
+            # initially populate with VolumetricFlowRate as the default variable, then update dynamically when the user selects different variables from the dropdown.
+            df_stats = mf.summary_stats(df_believable, ['VolumetricFlowRate'],
+                                        df_bounds, ds_keywords,
+                                        ds_replacements)
 
             #print stuff to terminal to know better what is going on
             #print(mf.summary_stats(df_believable, ['VolumetricFlowRate'], df_bounds, ds_keywords, ds_replacements))
@@ -226,7 +277,7 @@ def select_file(contents):
                             'display': 'inline'
                         }),
                     dcc.Dropdown(options=list(df_believable.columns.values[4:]),
-                                value=['VolumetricFlowRate'],
+                                value=['VolumetricFlowRate'],  # initially populate with VolumetricFlowRate as the default variable, then update dynamically when the user selects different variables from the dropdown.
                                 id='variable-dropdown',
                                 multi=True,
                                 placeholder='Select Sensor Data')
@@ -263,7 +314,7 @@ def select_file(contents):
                 ],
                 style={
                     'whiteSpace': 'pre-line'
-                }), html.Div(  # return summary statistics as a table
+                }), html.Div(  # return summary statistics as a table #TODO: separate summary stats table into its own div for organization/layout purposes
                     id='stats-container',
                     children=[
                         html.H2('Summary Statistics'),
@@ -320,14 +371,16 @@ def select_file(contents):
                                 'display': 'inline-block'
                             }),
                         ])
-        except ValueError as error: #NameError?, ValueError?, EOFError?, RuntimeError?
+        except ValueError as error:  #NameError?, ValueError?, EOFError?, RuntimeError?
             print('Program error:')
             print(traceback.format_exc())
             logging.error(traceback.format_exc())
             return html.Div(
                 id='file-error',
                 children=[
-                    html.P('File format is not supported. Program cannot read this file.'),
+                    html.
+                    P('File format is not supported. Program cannot read this file.'
+                      ),
                     #html.P(error)
                 ])
     else:

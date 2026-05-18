@@ -11,3 +11,7 @@ airPaltitude = 73110 #average air pressure at 8,000 ft
 # grams/liter. Table at bottom of https://www.engineeringtoolbox.com/air-temperature-pressure-density-d_771.html, expect air density to be around 1
 airDcoldSeaLevel = 1.3 # air density approximately at sea level and freezing temperatures
 airDhotAltitude = 0.76 # air density approximately at 8,000ft and 56 degrees Celcius 
+
+# constants associated with function parameters
+BOUNDARY_COLUMN_NAME = 'VARIABLE' # the column name in boundary_numbers.csv that contains variable names.
+DEFAULT_VARIABLE = 'VolumetricFlowRate' # the default variable to display results when the app first loads.

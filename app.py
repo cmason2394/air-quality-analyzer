@@ -8,9 +8,9 @@ import threading
 import pandas as pd
 import traceback
 import logging
-import assets
 from assets import my_functions as mf
 from assets import my_strings as strings
+from assets import my_constants as constants
 import base64
 import io
 
@@ -90,7 +90,7 @@ def select_file(contents: str):
         Updates global variables: df_relevant, df_believable, df_units, ds_time, and text when a valid file is successfully loaded.
         These are accessed by subsequent callbacks.
     
-        The scatterplot, bounds alerts, and summary statistics table are initially populated with VolumetricFlowRate as the default variable.
+        The scatterplot, bounds alerts, and summary statistics table are initially populated with a default variable defined in constants.
         These update dynamically when the user selects different variables from the dropdown.
     """
     print('in first callback')
@@ -191,21 +191,21 @@ def select_file(contents: str):
             #print(ds_time)
 
             # tuple that contains an alert message and dataframe showing the user how long a variables was below and above its boundaries.
-            # initially populate with VolumetricFlowRate as the default variable, then update dynamically when the user selects different variables from the dropdown.
+            # initially populate with a default variable, then updates dynamically when the user selects different variables from the dropdown.
             bounds = mf.check_bounds(df_boundary_numbers,
-                                     ['VolumetricFlowRate'], 'VARIABLE',
+                                     [constants.DEFAULT_VARIABLE], constants.BOUNDARY_COLUMN_NAME,
                                      df_believable, ds_time, ds_keywords,
                                      ds_replacements, text)
             df_bounds = bounds[
                 1]  # the second part of the tuple, a pandas dataframe
 
-            # initially populate with VolumetricFlowRate as the default variable, then update dynamically when the user selects different variables from the dropdown.
-            df_stats = mf.summary_stats(df_believable, ['VolumetricFlowRate'],
+            # initially populate with a default variable, then updates dynamically when the user selects different variables from the dropdown.
+            df_stats = mf.summary_stats(df_believable, [constants.DEFAULT_VARIABLE],
                                         df_bounds, ds_keywords,
                                         ds_replacements)
 
             #print stuff to terminal to know better what is going on
-            #print(mf.summary_stats(df_believable, ['VolumetricFlowRate'], df_bounds, ds_keywords, ds_replacements))
+            #print(mf.summary_stats(df_believable, [constants.DEFAULT_VARIABLE], df_bounds, ds_keywords, ds_replacements))
 
             return html.Div(
                 id='file_info_container',
@@ -277,7 +277,7 @@ def select_file(contents: str):
                             'display': 'inline'
                         }),
                     dcc.Dropdown(options=list(df_believable.columns.values[4:]),
-                                value=['VolumetricFlowRate'],  # initially populate with VolumetricFlowRate as the default variable, then update dynamically when the user selects different variables from the dropdown.
+                                value=[constants.DEFAULT_VARIABLE],  # initially populate with a default variable, then update dynamically when the user selects different variables from the dropdown.
                                 id='variable-dropdown',
                                 multi=True,
                                 placeholder='Select Sensor Data')
@@ -387,6 +387,10 @@ def select_file(contents: str):
         return ""
 
 # callback for selected columns in table1
+# TODO: pin_columns callback is not functional. Fix it to allow users to fix selected columns while scrolling sideways.  
+# Related table properties (column_selectable, selected_columns) are commented out in table1.
+# Got as far as fixing one column programatically, but it wasn't user selectable.
+# See private repo "air-quality-data-project" master branch commits 9cdd63e, 9040fa0, 7a5c94c for previous attempts.
 @app.callback(
     Output(component_id='table1', component_property='fixed_columns'),
     Input(component_id='table1', component_property='selected_columns')
@@ -406,7 +410,22 @@ def pin_columns(selected_columns):
     Input(component_id='variable-dropdown', component_property='value'),
     Input(component_id='time-series-radio-buttons',
           component_property='value'))
-def update_scatterplot(selected_variables, selected_time_series):
+def update_scatterplot(selected_variables:list[str], selected_time_series:str):
+    """
+    Callback that updates the scatterplot based on the selected variables from the dropdown and the selected time series from the radio buttons.
+
+    Args:
+        selected_variables (list[str]): Variable names selected from the dropdown, plotted on the y axis. 
+        selected_time_series (str): Column name of the time series selected via radio button, used as the x-axis. 
+            One of 'SampleTime', 'UTCDateTime', or 'LocalDateTime'.
+
+    Returns:
+        go.Figure: Scatterplot of selected variables over the selected time series.
+            Delegates to mf.update_scatterplot() for figure generation. 
+    
+    Note:
+        Reads global variable df_believable. 
+    """
     print(f'SELECTED VARIABLES IN SCATTERPLOT CALLBACK {selected_variables}')
     return mf.update_scatterplot(df_believable, selected_variables,
                                  selected_time_series)
@@ -417,9 +436,31 @@ def update_scatterplot(selected_variables, selected_time_series):
     Output(component_id='error-message', component_property='children'),
     Output(component_id='bounds_store', component_property='data'),
     Input(component_id='variable-dropdown', component_property='value'))
-def check_bounds(selected_variables):
+def check_bounds(selected_variables: list[str]) -> tuple[list[str], list[dict]]:
+    """
+    Callback that checks whether selected variables exceed their defined boundaries.
+
+    Triggered by dropdown selection. Delegates boundary checking logic to mf.check_bounds(), 
+    then converts the resulting DataFrame to a list of dictionaries for storage in dcc.Store.
+
+    Args:
+        selected_variables (list[str]): Variable names selected from the dropdown.
+
+    Returns:
+        tuple[list[str], list[dict]]:
+            - list[str]: Human-readable alert messages describing how long each variable was below or above its expected range.
+            - list[dict]: Bounds results as a list of records, one per variable,
+                stored in bounds_store for use by the summary_stats callback.
+                Each dict has keys: 'Variable', 'Time below limit', 'Time above limit', 'Study Period'.
+
+    Note:
+        Reads global variables df_boundary_numbers, df_believable, ds_time, ds_keywords, ds_replacements, and text.
+
+        Uses constants.BOUNDARY_COLUMN_NAME as the boundary column name.
+        Update in my_constants.py if boundary_numbers.csv changes this column.
+    """
     bounds = mf.check_bounds(df_boundary_numbers, selected_variables,
-                             'VARIABLE', df_believable, ds_time, ds_keywords,
+                             constants.BOUNDARY_COLUMN_NAME, df_believable, ds_time, ds_keywords,
                              ds_replacements, text)
     print(f'BOUNDS AFTER ALERT CALLBACK: {bounds}')
     return bounds[0], bounds[1].to_dict('records')
@@ -432,7 +473,27 @@ def check_bounds(selected_variables):
     Input(component_id='bounds_store', component_property='data'),
     Input(component_id='variable-dropdown', component_property='value')
     )
-def summary_stats(bounds_data, selected_variables):
+def summary_stats(bounds_data:list[dict], selected_variables:list[str]) -> tuple[list[dict], list[dict]]:
+    """
+    Callback that updates the summary statistics table.
+
+    Updated when the user selects different dropdown variables.
+
+    Args:
+        bounds_data (list[dict]): List of dictionaries containing bounds results for each variable, stored in bounds_store by the check_bounds callback.
+        selected_variables (list[str]): Variable names selected from the dropdown.
+
+    Returns:
+        tuple[list[dict], list[dict]]:
+            - list[dict]: Data: Summary statistics table for the selected variables.
+                Each dict has keys: 'Variable', 'Mean', 'Standard Deviation', 'Coefficient of Variation', 
+                'Inter-Quartile Range', and 'beyondLimit' (boolean indicating if variable is beyond limits).
+            - list[dict]: Styling: Styling for the table. 
+                Highlights rows where beyondLimit is True, though this is not yet functioning as expected.
+
+    Note:
+        Reads global variables df_believable, ds_keywords, and ds_replacements.    
+    """
     bounds_df = pd.DataFrame(bounds_data)
     stats_df = mf.summary_stats(df_believable, selected_variables, bounds_df, ds_keywords, ds_replacements)
     style_data_conditional = [{

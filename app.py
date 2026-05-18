@@ -16,7 +16,6 @@ import io
 
 # Initialize global variables, stored at global scope to be used across multiple callback functions and avoid reloading dataframes and other variables multiple times.
 # These variables are updated in the first callback function when the user uploads a file, and then used in subsequent callbacks for the scatterplot, alert function, and summary statistics.
-file_path = "" #filepath of the uploaded file, stored as a string
 df_relevant = pd.DataFrame() # dataframe containing all relevant data for the project, excludes columns that are beyond the scope of this project. Rounded to 1 decimal place for easier interpretation and to avoid false precision.
 df_believable = pd.DataFrame() # dataframe of data that helps determine whether the data is believable (complete and accurate). Contains a subset of the columns in df_relevant related to device information and enviromental metrics.
 df_units = pd.DataFrame() # dataframe that contains the relevant variable names and their units of measurement
@@ -64,7 +63,7 @@ app.layout = html.Div([
 # first callback function when the user uploads a file
 @app.callback(Output("output", "children"),
               [Input("upload-data", "contents")])
-def select_file(contents: str):
+def select_file(contents: str): # return type omitted due to complex union of Dash components.
     """
     Callback function that is triggered when the user uploads a file. 
     
@@ -185,7 +184,7 @@ def select_file(contents: str):
                 'PumpV', 'MassFlow', 'BFGvolt', 'TPumpsON', 'TPumpsOFF'
             ]]
 
-           #TODO: use dcc.Store for ds_time rather than global variable
+            #TODO: use dcc.Store for ds_time rather than global variable
             global ds_time
             ds_time = df_believable['UnixTime']
             #print(ds_time)
@@ -512,9 +511,17 @@ def summary_stats(bounds_data:list[dict], selected_variables:list[str]) -> tuple
 
 # run application
 def run_dash():
+    """
+    Start the Dash server in debug mode with the reloader disabled.
+
+    The reloader is disabled to prevent conflicts with threading and with global variables.
+    Called in a separate thread by the __main__ block to allow the server to run alongside other processes.
+    """
     app.run(debug=True, use_reloader=False) #host='0.0.0.0', port=8099
 
 
+# Entry point for the application.
+# Run with 'python app.py' from the command line.
 if __name__ == "__main__":
     # Start Dash server in a separate thread
     dash_thread = threading.Thread(target=run_dash)

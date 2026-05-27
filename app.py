@@ -38,6 +38,7 @@ app = dash.Dash(__name__, suppress_callback_exceptions=True)
 #app title
 app.title = strings.title
 
+# layout of landing page, contains title, welcome message, file upload button, and output div that is populated dynamically by the select_file callback when the user uploads a file.
 app.layout = html.Div([
     html.H1(strings.title),
     html.P(strings.welcome + ' ' + strings.purpose + '\n' + strings.begin),
@@ -63,7 +64,9 @@ app.layout = html.Div([
 # first callback function when the user uploads a file
 @app.callback(Output("output", "children"),
               [Input("upload-data", "contents")])
-def select_file(contents: str): # return type omitted due to complex union of Dash components.
+def select_file(
+    contents: str
+):  # return type omitted due to complex union of Dash components.
     """
     Callback function that is triggered when the user uploads a file. 
     
@@ -96,23 +99,39 @@ def select_file(contents: str): # return type omitted due to complex union of Da
     if contents is not None:
         # Decode the uploaded file contents
         #print(f'contents: {contents}')
-        content_type, content_string = contents.split(',')
-        decoded = base64.b64decode(content_string)
-        file_content = io.StringIO(decoded.decode('utf-8'))
-        raw_content = file_content.getvalue()
-        file_content.seek(0)  # reset file pointer to the beginning
-        print(
-            f'file_content data type: {type(file_content)}, content: {file_content} and raw content: {raw_content}'
-        )
+        content_type, content_string = contents.split(',') #parse dcc.Upload contents into the two parts of the data URL string: metadata and encoded contents.
 
-        # load file as string
+        # check contents type to make sure it's a supported encoding and file type.
+        if 'base64' not in content_type:
+            return html.Div("File encoding not supported. Expected base64.")
+        if 'text' not in content_type and 'csv' not in content_type:
+            return html.Div(
+                "File type not supported. Expected a text or csv file.")
+       
+        # decode base64 to bytes, then to string
+        decoded = base64.b64decode(content_string) #bytes object
+        decoded_text = decoded.decode('utf-8') #decode bytes to string
+        
+        # create text string with empty lines removed
+        # used by find_table_start, on_load, pull_value, check_bounds
         #TODO: store text in a dcc.Store rather than a global variable, or consider another option for storing the raw text data that is accessible across callbacks without needing to reload the file or reprocess the text data multiple times.
         global text
         text = "\n".join([
-            line for line in raw_content.splitlines() if line.strip() != ''
+            line for line in decoded_text.splitlines() if line.strip() != ''
         ])  # remove empty lines
+
+        # wrap text in StringIO so pandas can read it as a file-like object
+        file_content = io.StringIO(text) #file-like object that pd.read_csv can read
         file_content.seek(0)  # reset file pointer to the beginning
+        
+        '''
+        print(
+            f'file_content data type: {type(file_content)}, content: {file_content} and raw content: {raw_content}'
+        )
+        '''
+
         #print(f'text data type: {type(text)} and content: {text}')
+
 
         # check to see if the file is in a format this program can analyze
         try:
@@ -135,18 +154,14 @@ def select_file(contents: str): # return type omitted due to complex union of Da
             '''
 
             # Load the selected file as a DataFrame
-            #file_content.seek(0)
-            df = pd.read_csv(io.StringIO(text), skiprows=table_start)
+            file_content.seek(0)
+            df = pd.read_csv(file_content, skiprows=table_start)
             #df = pd.read_csv(file_content, skiprows=table_start)
-
-            #close IO stream
-            file_content.close()
 
             print(f'DataFrame shape: {df.shape}')
             print(f'DataFrame columns: {df.columns}')
             print(f'DataFrame head: {df.head()}')
 
-            
             #TODO: use dcc.Store for df_relevant rather than global variable
             global df_relevant
             df_relevant = df.drop([
@@ -161,9 +176,10 @@ def select_file(contents: str): # return type omitted due to complex union of Da
 
             # store a dataframe that contains the relevant variable names and their units of measurement
             #TODO: use dcc.Store for df_units rather than global variable
+            file_content.seek(0)
             global df_units
             df_units = pd.read_csv(
-                io.StringIO(text),
+                file_content,
                 skiprows=table_start -
                 1,  #units are listed in the row above the table start row
                 header=None,
@@ -174,6 +190,9 @@ def select_file(contents: str): # return type omitted due to complex union of Da
             print(
                 f' UNITS DATAFRAME: {df_units.head(20)}, column names: {df_units.columns.to_list()}, unit columns exists: {df_units.Units}'
             )
+
+            #close IO stream
+            file_content.close()
 
             #TODO: use dcc.Store for df_believable rather than global variable
             global df_believable
@@ -192,14 +211,16 @@ def select_file(contents: str): # return type omitted due to complex union of Da
             # tuple that contains an alert message and dataframe showing the user how long a variables was below and above its boundaries.
             # initially populate with a default variable, then updates dynamically when the user selects different variables from the dropdown.
             bounds = mf.check_bounds(df_boundary_numbers,
-                                     [constants.DEFAULT_VARIABLE], constants.BOUNDARY_COLUMN_NAME,
+                                     [constants.DEFAULT_VARIABLE],
+                                     constants.BOUNDARY_COLUMN_NAME,
                                      df_believable, ds_time, ds_keywords,
                                      ds_replacements, text)
             df_bounds = bounds[
                 1]  # the second part of the tuple, a pandas dataframe
 
             # initially populate with a default variable, then updates dynamically when the user selects different variables from the dropdown.
-            df_stats = mf.summary_stats(df_believable, [constants.DEFAULT_VARIABLE],
+            df_stats = mf.summary_stats(df_believable,
+                                        [constants.DEFAULT_VARIABLE],
                                         df_bounds, ds_keywords,
                                         ds_replacements)
 
@@ -386,7 +407,7 @@ def select_file(contents: str): # return type omitted due to complex union of Da
         return ""
 
 # callback for selected columns in table1
-# TODO: pin_columns callback is not functional. Fix it to allow users to fix selected columns while scrolling sideways.  
+# TODO: pin_columns callback is not functional. Fix it to allow users to fix selected columns while scrolling sideways.
 # Related table properties (column_selectable, selected_columns) are commented out in table1.
 # Got as far as fixing one column programatically, but it wasn't user selectable.
 # See private repo "air-quality-data-project" master branch commits 9cdd63e, 9040fa0, 7a5c94c for previous attempts.

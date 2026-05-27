@@ -153,7 +153,12 @@ def select_file(
         try:
             print('in big try, except block')
             # find start of table
-            table_start = mf.find_table_start(text, '(HH:MM:SS)') + 1
+            table_start = mf.find_table_start(text, '(HH:MM:SS)')
+            if table_start is None:
+                return html.Div(
+                    "Could not find the data table. File format may not be supported. Make sure the file is a valid air quality log file."
+                )
+            table_start += 1  # add 1 to skip the units row and start reading data from the header row.
             print(f'Table starts at row: {table_start}')
             '''# Preview the first few lines of the file to debug the structure
             preview_lines = mf.split_into_rows(text)[:10]
@@ -168,6 +173,7 @@ def select_file(
             for i, line in enumerate(lines_after_start[:10]):
                 print(f'Line {i + table_start}: {line}')
             '''
+       
 
             # Load the selected file as a DataFrame
             file_content.seek(0)

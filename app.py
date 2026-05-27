@@ -99,7 +99,10 @@ def select_file(
     if contents is not None:
         # Decode the uploaded file contents
         #print(f'contents: {contents}')
-        content_type, content_string = contents.split(',') #parse dcc.Upload contents into the two parts of the data URL string: metadata and encoded contents.
+        try:
+            content_type, content_string = contents.split(',') #parse dcc.Upload contents into the two parts of the data URL string: metadata and encoded contents.
+        except ValueError:
+            return html.Div("Could not read file upload. Unexpected format.")
 
         # check contents type to make sure it's a supported encoding and file type.
         if 'base64' not in content_type:
@@ -109,9 +112,22 @@ def select_file(
                 "File type not supported. Expected a text or csv file.")
        
         # decode base64 to bytes, then to string
-        decoded = base64.b64decode(content_string) #bytes object
-        decoded_text = decoded.decode('utf-8') #decode bytes to string
-        
+        try:
+            decoded = base64.b64decode(content_string) #bytes object
+        except base64.binascii.Error:
+            try:
+                decoded = base64.urlsafe_b64decode(content_string) #try urlsafe decoding if standard base64 decoding fails
+            except base64.binascii.Error:
+                return html.Div("Could not decode file. File may be corrputed or not properly encoded.")
+        try:
+            decoded_text = decoded.decode('utf-8') #decode bytes to string
+        except UnicodeDecodeError:
+            try:
+                decoded_text = decoded.decode('latin-1') #try latin-1 decoding if utf-8 decoding fails
+            except UnicodeDecodeError:
+                return html.Div("Could not read file. Unsupported text encoding. Expected UTF-8.")
+
+
         # create text string with empty lines removed
         # used by find_table_start, on_load, pull_value, check_bounds
         #TODO: store text in a dcc.Store rather than a global variable, or consider another option for storing the raw text data that is accessible across callbacks without needing to reload the file or reprocess the text data multiple times.

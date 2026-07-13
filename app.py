@@ -102,6 +102,7 @@ def select_file(
         try:
             content_type, content_string = contents.split(',') #parse dcc.Upload contents into the two parts of the data URL string: metadata and encoded contents.
         except ValueError:
+            logging.error(traceback.format_exc())
             return html.Div("Could not read file upload. Unexpected format.")
 
         # check contents type to make sure it's a supported encoding and file type.
@@ -118,6 +119,7 @@ def select_file(
             try:
                 decoded = base64.urlsafe_b64decode(content_string) #try urlsafe decoding if standard base64 decoding fails
             except base64.binascii.Error:
+                logging.error(traceback.format_exc())
                 return html.Div("Could not decode file. File may be corrupted or not properly encoded.")
         try:
             decoded_text = decoded.decode('utf-8') #decode bytes to string
@@ -125,6 +127,7 @@ def select_file(
             try:
                 decoded_text = decoded.decode('latin-1') #try latin-1 decoding if utf-8 decoding fails
             except UnicodeDecodeError:
+                logging.error(traceback.format_exc())
                 return html.Div("Could not read file. Unsupported text encoding. Expected UTF-8.")
 
 
@@ -210,8 +213,10 @@ def select_file(
             #print(ds_time)
 
         except KeyError as error:
+            logging.error(traceback.format_exc())
             return html.Div(f"File is missing an expected column: {error}. Make sure this is a valid air quality log file.")
         except pd.errors.ParserError as error:
+            logging.error(traceback.format_exc())
             return html.Div(f"Could not parse file as CSV. File may be corrupted or not properly formatted. ParserError: {error}")
 
         # store a dataframe that contains the relevant variable names and their units of measurement

@@ -118,7 +118,7 @@ def select_file(
             try:
                 decoded = base64.urlsafe_b64decode(content_string) #try urlsafe decoding if standard base64 decoding fails
             except base64.binascii.Error:
-                return html.Div("Could not decode file. File may be corrputed or not properly encoded.")
+                return html.Div("Could not decode file. File may be corrupted or not properly encoded.")
         try:
             decoded_text = decoded.decode('utf-8') #decode bytes to string
         except UnicodeDecodeError:
@@ -174,7 +174,7 @@ def select_file(
                 print(f'Line {i + table_start}: {line}')
             '''
        
-
+            
             # Load the selected file as a DataFrame
             file_content.seek(0)
             df = pd.read_csv(file_content, skiprows=table_start)

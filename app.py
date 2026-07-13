@@ -243,24 +243,32 @@ def select_file(
         #close IO stream
         file_content.close()
 
-        # tuple that contains an alert message and dataframe showing the user how long a variables was below and above its boundaries.
-        # initially populate with a default variable, then updates dynamically when the user selects different variables from the dropdown.
-        bounds = mf.check_bounds(df_boundary_numbers,
-                                    [constants.DEFAULT_VARIABLE],
-                                    constants.BOUNDARY_COLUMN_NAME,
-                                    df_believable, ds_time, ds_keywords,
-                                    ds_replacements, text)
-        df_bounds = bounds[
-            1]  # the second part of the tuple, a pandas dataframe
+        try:
+            # tuple that contains an alert message and dataframe showing the user how long a variables was below and above its boundaries.
+            # initially populate with a default variable, then updates dynamically when the user selects different variables from the dropdown.
+            bounds = mf.check_bounds(df_boundary_numbers,
+                                        [constants.DEFAULT_VARIABLE],
+                                        constants.BOUNDARY_COLUMN_NAME,
+                                        df_believable, ds_time, ds_keywords,
+                                        ds_replacements, text)
+            df_bounds = bounds[
+                1]  # the second part of the tuple, a pandas dataframe
 
-        # initially populate with a default variable, then updates dynamically when the user selects different variables from the dropdown.
-        df_stats = mf.summary_stats(df_believable,
-                                    [constants.DEFAULT_VARIABLE],
-                                    df_bounds, ds_keywords,
-                                    ds_replacements)
+            # initially populate with a default variable, then updates dynamically when the user selects different variables from the dropdown.
+            df_stats = mf.summary_stats(df_believable,
+                                        [constants.DEFAULT_VARIABLE],
+                                        df_bounds, ds_keywords,
+                                        ds_replacements)
 
-        #print stuff to terminal to know better what is going on
-        #print(mf.summary_stats(df_believable, [constants.DEFAULT_VARIABLE], df_bounds, ds_keywords, ds_replacements))
+            #print stuff to terminal to know better what is going on
+            #print(mf.summary_stats(df_believable, [constants.DEFAULT_VARIABLE], df_bounds, ds_keywords, ds_replacements))
+        except KeyError as error:
+            logging.error(traceback.format_exc())
+            return html.Div(f"Could not calculate bounds or summary statistics. Missing expected column: {error}.")
+        except (TypeError, ValueError, ZeroDivisionError) as error:
+            logging.error(traceback.format_exc())
+            return html.Div(f"Could not calculate bounds or summary statistics. Error: {error}")
+        
 
         return html.Div(
             id='file_info_container',

@@ -292,7 +292,7 @@ def select_file(
                         #'selectable': True,
                         'hideable': True
                     } for idx, col in enumerate(df_relevant.columns)],
-                    tooltip_header={i: df_dictionary['Description'][i] for i in df_relevant.columns},
+                    tooltip_header={i: df_dictionary['Description'].get(i, '') for i in df_relevant.columns},
                     virtualization=True,  #allows faster loading for large tables
                     #column_selectable = 'multi',
                     #selected_columns = [],

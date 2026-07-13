@@ -175,9 +175,8 @@ def select_file(
     
         
         # Load the selected file as a DataFrame
-        file_content.seek(0)
-
         try:
+            file_content.seek(0)
             df = pd.read_csv(file_content, skiprows=table_start)
 
             print(f'DataFrame shape: {df.shape}')
@@ -209,7 +208,7 @@ def select_file(
             global ds_time
             ds_time = df_believable['UnixTime']
             #print(ds_time)
-            
+
         except KeyError as error:
             return html.Div(f"File is missing an expected column: {error}. Make sure this is a valid air quality log file.")
         except pd.errors.ParserError as error:
@@ -217,20 +216,24 @@ def select_file(
 
         # store a dataframe that contains the relevant variable names and their units of measurement
         #TODO: use dcc.Store for df_units rather than global variable
-        file_content.seek(0)
-        global df_units
-        df_units = pd.read_csv(
-            file_content,
-            skiprows=table_start -
-            1,  #units are listed in the row above the table start row
-            header=None,
-            nrows=3).reindex([1, 0]).transpose()
-        df_units.columns = ['Variables', 'Units']
-        df_units[
-            'Names and Units'] = df_units['Variables'] + df_units['Units']
-        print(
-            f' UNITS DATAFRAME: {df_units.head(20)}, column names: {df_units.columns.to_list()}, unit columns exists: {df_units.Units}'
-        )
+        try:
+            file_content.seek(0)
+            global df_units
+            df_units = pd.read_csv(
+                file_content,
+                skiprows=table_start -
+                1,  #units are listed in the row above the table start row
+                header=None,
+                nrows=3).reindex([1, 0]).transpose()
+            df_units.columns = ['Variables', 'Units']
+            df_units[
+                'Names and Units'] = df_units['Variables'] + df_units['Units']
+            print(
+                f' UNITS DATAFRAME: {df_units.head(20)}, column names: {df_units.columns.to_list()}, unit columns exists: {df_units.Units}'
+            )
+        except (KeyError, pd.errors.ParserError) as error:
+            df_units = pd.DataFrame() # empty dataframe so rest of app continues to work
+            logging.warning("Could not load units data - continuing without units.")
 
         #close IO stream
         file_content.close()

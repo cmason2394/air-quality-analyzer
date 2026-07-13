@@ -176,24 +176,44 @@ def select_file(
         
         # Load the selected file as a DataFrame
         file_content.seek(0)
-        df = pd.read_csv(file_content, skiprows=table_start)
-        #df = pd.read_csv(file_content, skiprows=table_start)
 
-        print(f'DataFrame shape: {df.shape}')
-        print(f'DataFrame columns: {df.columns}')
-        print(f'DataFrame head: {df.head()}')
+        try:
+            df = pd.read_csv(file_content, skiprows=table_start)
 
-        #TODO: use dcc.Store for df_relevant rather than global variable
-        global df_relevant
-        df_relevant = df.drop([
-            'FLOWCTL', 'GPSRT', 'SD_DATAW', 'SD_HEADW', 'PumpPow1',
-            'PumpPow2', 'SOC', 'PM1MCVar', 'PM2_5MCVar', 'PM4MCVar',
-            'PM10MCVar', 'PM0_5NCVar', 'PM1NCVar', 'PM2_5NCVar',
-            'PM4NCVar', 'PM10NCVar', 'PMtypicalParticleSizeVar',
-            'AccelXVar', 'AccelYVar', 'AccelZVar', 'RotXVar', 'RotYVar',
-            'RotZVar', 'BFGenergy'
-        ],
-                                axis=1).round(1)
+            print(f'DataFrame shape: {df.shape}')
+            print(f'DataFrame columns: {df.columns}')
+            print(f'DataFrame head: {df.head()}')
+
+            #TODO: use dcc.Store for df_relevant rather than global variable
+            global df_relevant
+            df_relevant = df.drop([
+                'FLOWCTL', 'GPSRT', 'SD_DATAW', 'SD_HEADW', 'PumpPow1',
+                'PumpPow2', 'SOC', 'PM1MCVar', 'PM2_5MCVar', 'PM4MCVar',
+                'PM10MCVar', 'PM0_5NCVar', 'PM1NCVar', 'PM2_5NCVar',
+                'PM4NCVar', 'PM10NCVar', 'PMtypicalParticleSizeVar',
+                'AccelXVar', 'AccelYVar', 'AccelZVar', 'RotXVar', 'RotYVar',
+                'RotZVar', 'BFGenergy'
+            ],
+                                    axis=1).round(1)
+            
+                    #TODO: use dcc.Store for df_believable rather than global variable
+            global df_believable
+            df_believable = df_relevant[[
+                'UnixTime', 'SampleTime', 'DateTimeUTC', 'DateTimeLocal',
+                'VolumetricFlowRate', 'AtmoT', 'PumpT', 'FdpT', 'BattT',
+                'AccelT', 'AtmoP', 'PumpP', 'FdPdP', 'PumpRH', 'AtmoRho',
+                'PumpV', 'MassFlow', 'BFGvolt', 'TPumpsON', 'TPumpsOFF'
+            ]]
+
+            #TODO: use dcc.Store for ds_time rather than global variable
+            global ds_time
+            ds_time = df_believable['UnixTime']
+            #print(ds_time)
+            
+        except KeyError as error:
+            return html.Div(f"File is missing an expected column: {error}. Make sure this is a valid air quality log file.")
+        except pd.errors.ParserError as error:
+            return html.Div(f"Could not parse file as CSV. File may be corrupted or not properly formatted. ParserError: {error}")
 
         # store a dataframe that contains the relevant variable names and their units of measurement
         #TODO: use dcc.Store for df_units rather than global variable
@@ -214,20 +234,6 @@ def select_file(
 
         #close IO stream
         file_content.close()
-
-        #TODO: use dcc.Store for df_believable rather than global variable
-        global df_believable
-        df_believable = df_relevant[[
-            'UnixTime', 'SampleTime', 'DateTimeUTC', 'DateTimeLocal',
-            'VolumetricFlowRate', 'AtmoT', 'PumpT', 'FdpT', 'BattT',
-            'AccelT', 'AtmoP', 'PumpP', 'FdPdP', 'PumpRH', 'AtmoRho',
-            'PumpV', 'MassFlow', 'BFGvolt', 'TPumpsON', 'TPumpsOFF'
-        ]]
-
-        #TODO: use dcc.Store for ds_time rather than global variable
-        global ds_time
-        ds_time = df_believable['UnixTime']
-        #print(ds_time)
 
         # tuple that contains an alert message and dataframe showing the user how long a variables was below and above its boundaries.
         # initially populate with a default variable, then updates dynamically when the user selects different variables from the dropdown.

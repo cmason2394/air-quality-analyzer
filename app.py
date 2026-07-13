@@ -150,281 +150,269 @@ def select_file(
 
 
         # check to see if the file is in a format this program can analyze
-        try:
-            print('in big try, except block')
-            # find start of table
-            table_start = mf.find_table_start(text, '(HH:MM:SS)')
-            if table_start is None:
-                return html.Div(
-                    "Could not find the data table. File format may not be supported. Make sure the file is a valid air quality log file."
-                )
-            table_start += 1  # add 1 to skip the units row and start reading data from the header row.
-            print(f'Table starts at row: {table_start}')
-            '''# Preview the first few lines of the file to debug the structure
-            preview_lines = mf.split_into_rows(text)[:10]
-            print('Preview of the first 10 lines of the file:')
-            for i, line in enumerate(preview_lines):
-                print(f'Line {i}: {line}')
-            '''
-            '''
-            # Print the lines after the table start row
-            lines_after_start = mf.split_into_rows(text)[table_start:]
-            print('Lines after the table start row:')
-            for i, line in enumerate(lines_after_start[:10]):
-                print(f'Line {i + table_start}: {line}')
-            '''
-       
-            
-            # Load the selected file as a DataFrame
-            file_content.seek(0)
-            df = pd.read_csv(file_content, skiprows=table_start)
-            #df = pd.read_csv(file_content, skiprows=table_start)
-
-            print(f'DataFrame shape: {df.shape}')
-            print(f'DataFrame columns: {df.columns}')
-            print(f'DataFrame head: {df.head()}')
-
-            #TODO: use dcc.Store for df_relevant rather than global variable
-            global df_relevant
-            df_relevant = df.drop([
-                'FLOWCTL', 'GPSRT', 'SD_DATAW', 'SD_HEADW', 'PumpPow1',
-                'PumpPow2', 'SOC', 'PM1MCVar', 'PM2_5MCVar', 'PM4MCVar',
-                'PM10MCVar', 'PM0_5NCVar', 'PM1NCVar', 'PM2_5NCVar',
-                'PM4NCVar', 'PM10NCVar', 'PMtypicalParticleSizeVar',
-                'AccelXVar', 'AccelYVar', 'AccelZVar', 'RotXVar', 'RotYVar',
-                'RotZVar', 'BFGenergy'
-            ],
-                                  axis=1).round(1)
-
-            # store a dataframe that contains the relevant variable names and their units of measurement
-            #TODO: use dcc.Store for df_units rather than global variable
-            file_content.seek(0)
-            global df_units
-            df_units = pd.read_csv(
-                file_content,
-                skiprows=table_start -
-                1,  #units are listed in the row above the table start row
-                header=None,
-                nrows=3).reindex([1, 0]).transpose()
-            df_units.columns = ['Variables', 'Units']
-            df_units[
-                'Names and Units'] = df_units['Variables'] + df_units['Units']
-            print(
-                f' UNITS DATAFRAME: {df_units.head(20)}, column names: {df_units.columns.to_list()}, unit columns exists: {df_units.Units}'
-            )
-
-            #close IO stream
-            file_content.close()
-
-            #TODO: use dcc.Store for df_believable rather than global variable
-            global df_believable
-            df_believable = df_relevant[[
-                'UnixTime', 'SampleTime', 'DateTimeUTC', 'DateTimeLocal',
-                'VolumetricFlowRate', 'AtmoT', 'PumpT', 'FdpT', 'BattT',
-                'AccelT', 'AtmoP', 'PumpP', 'FdPdP', 'PumpRH', 'AtmoRho',
-                'PumpV', 'MassFlow', 'BFGvolt', 'TPumpsON', 'TPumpsOFF'
-            ]]
-
-            #TODO: use dcc.Store for ds_time rather than global variable
-            global ds_time
-            ds_time = df_believable['UnixTime']
-            #print(ds_time)
-
-            # tuple that contains an alert message and dataframe showing the user how long a variables was below and above its boundaries.
-            # initially populate with a default variable, then updates dynamically when the user selects different variables from the dropdown.
-            bounds = mf.check_bounds(df_boundary_numbers,
-                                     [constants.DEFAULT_VARIABLE],
-                                     constants.BOUNDARY_COLUMN_NAME,
-                                     df_believable, ds_time, ds_keywords,
-                                     ds_replacements, text)
-            df_bounds = bounds[
-                1]  # the second part of the tuple, a pandas dataframe
-
-            # initially populate with a default variable, then updates dynamically when the user selects different variables from the dropdown.
-            df_stats = mf.summary_stats(df_believable,
-                                        [constants.DEFAULT_VARIABLE],
-                                        df_bounds, ds_keywords,
-                                        ds_replacements)
-
-            #print stuff to terminal to know better what is going on
-            #print(mf.summary_stats(df_believable, [constants.DEFAULT_VARIABLE], df_bounds, ds_keywords, ds_replacements))
-
+    
+        # find start of table
+        table_start = mf.find_table_start(text, '(HH:MM:SS)')
+        if table_start is None:
             return html.Div(
-                id='file_info_container',
-                children=[
-                    html.Span('Showing results for file'),
-                    html.Span(mf.pull_value(text, 'LogFilename')),
-                    html.P(mf.on_load(text, ds_time),
-                        style={'whiteSpace': 'pre-line'})
-                ]
-            ), html.Div(
-                # return a table of the study data from the dataframe
-                id='table1_container',
-                children=[
-                    html.H2(strings.title_table1),
-                    dash_table.DataTable(
-                        id='table1',
-                        data=df_relevant.to_dict('records'),
-                        columns=[{
-                            'id': col, #tried this code to make it an index I could reference in selecting columns, preventing any data from displaying in table
-                            'name': col,
-                            #'selectable': True,
-                            'hideable': True
-                        } for idx, col in enumerate(df_relevant.columns)],
-                        tooltip_header={i: df_dictionary['Description'][i] for i in df_relevant.columns},
-                        virtualization=True,  #allows faster loading for large tables
-                        #column_selectable = 'multi',
-                        #selected_columns = [],
-                        fixed_columns={
-                            'headers': True,
-                            'data': 1
-                        },
-                        fixed_rows={
-                            'headers': True
-                        },  #still see header names as scroll through table
-                        style_cell={
-                            'minWidth': 180,
-                            'width': 180,
-                            'maxWidth': 180
-                        },  #set width to see header names, may use a wrap technique when names contain spaces
-                        style_table={
-                            'height': 350,  # default is 500
-                            'minWidth': '100%'
-                        },
-                        style_header={
-                            'backgroundColor': 'darkgrey',
-                            'fontWeight': 'bold',
-                        }),
-                ]
-            ), html.Div(  # return radio buttons to select desired time series for the x-axis of the scatterplot
-                id='radio_items_container',
-                children=[
-                    html.P(strings.select1,
-                        style={
-                            'fontWeight': 'bold',
-                            'display': 'inline'
-                        }),
-                    dcc.RadioItems(options=list(df_believable.columns.values[1:4]),
-                                value='DateTimeLocal',
-                                id='time-series-radio-buttons',
-                                inline=True,
-                                style={'display': 'inline'})
-                ]
-            ), html.Div(  # return a dropdown menu to select desired series to plot on the scatterplot and analyze
-                id='dropdown_container',
-                children=[
-                    html.P(strings.select2,
-                        style={
-                            'fontWeight': 'bold',
-                            'display': 'inline'
-                        }),
-                    dcc.Dropdown(options=list(df_believable.columns.values[4:]),
-                                value=[constants.DEFAULT_VARIABLE],  # initially populate with a default variable, then update dynamically when the user selects different variables from the dropdown.
-                                id='variable-dropdown',
-                                multi=True,
-                                placeholder='Select Sensor Data')
-                ],
-                style={
-                    'display': 'inline',
-                    'width': '50%',
-                    'height': '40px'
-                }
-            ), dcc.Graph(  # return a scatterplot
-                id='graph', figure={}
-            ), html.Div(  # return a warning if data goes beyond a certain range
-                id='Error-message-container',
-                children=[
-                    html.H2('Sensor Value Range'),
-                    html.P(children=bounds[0],
-                           id='error-message',
-                           style={
-                               'display': 'inline-block',
-                               'width': '50%'
-                           }),
-                    # return guiding text to explain how to interpret out of bounds flags
-                    html.Div(
-                        [
-                            html.H3('How to interpret out of range flags'),
-                            html.P(strings.flags_guiding_text)
-                        ],
+                "Could not find the data table. File format may not be supported. Make sure the file is a valid air quality log file."
+            )
+        table_start += 1  # add 1 to skip the units row and start reading data from the header row.
+        print(f'Table starts at row: {table_start}')
+        '''# Preview the first few lines of the file to debug the structure
+        preview_lines = mf.split_into_rows(text)[:10]
+        print('Preview of the first 10 lines of the file:')
+        for i, line in enumerate(preview_lines):
+            print(f'Line {i}: {line}')
+        '''
+        '''
+        # Print the lines after the table start row
+        lines_after_start = mf.split_into_rows(text)[table_start:]
+        print('Lines after the table start row:')
+        for i, line in enumerate(lines_after_start[:10]):
+            print(f'Line {i + table_start}: {line}')
+        '''
+    
+        
+        # Load the selected file as a DataFrame
+        file_content.seek(0)
+        df = pd.read_csv(file_content, skiprows=table_start)
+        #df = pd.read_csv(file_content, skiprows=table_start)
+
+        print(f'DataFrame shape: {df.shape}')
+        print(f'DataFrame columns: {df.columns}')
+        print(f'DataFrame head: {df.head()}')
+
+        #TODO: use dcc.Store for df_relevant rather than global variable
+        global df_relevant
+        df_relevant = df.drop([
+            'FLOWCTL', 'GPSRT', 'SD_DATAW', 'SD_HEADW', 'PumpPow1',
+            'PumpPow2', 'SOC', 'PM1MCVar', 'PM2_5MCVar', 'PM4MCVar',
+            'PM10MCVar', 'PM0_5NCVar', 'PM1NCVar', 'PM2_5NCVar',
+            'PM4NCVar', 'PM10NCVar', 'PMtypicalParticleSizeVar',
+            'AccelXVar', 'AccelYVar', 'AccelZVar', 'RotXVar', 'RotYVar',
+            'RotZVar', 'BFGenergy'
+        ],
+                                axis=1).round(1)
+
+        # store a dataframe that contains the relevant variable names and their units of measurement
+        #TODO: use dcc.Store for df_units rather than global variable
+        file_content.seek(0)
+        global df_units
+        df_units = pd.read_csv(
+            file_content,
+            skiprows=table_start -
+            1,  #units are listed in the row above the table start row
+            header=None,
+            nrows=3).reindex([1, 0]).transpose()
+        df_units.columns = ['Variables', 'Units']
+        df_units[
+            'Names and Units'] = df_units['Variables'] + df_units['Units']
+        print(
+            f' UNITS DATAFRAME: {df_units.head(20)}, column names: {df_units.columns.to_list()}, unit columns exists: {df_units.Units}'
+        )
+
+        #close IO stream
+        file_content.close()
+
+        #TODO: use dcc.Store for df_believable rather than global variable
+        global df_believable
+        df_believable = df_relevant[[
+            'UnixTime', 'SampleTime', 'DateTimeUTC', 'DateTimeLocal',
+            'VolumetricFlowRate', 'AtmoT', 'PumpT', 'FdpT', 'BattT',
+            'AccelT', 'AtmoP', 'PumpP', 'FdPdP', 'PumpRH', 'AtmoRho',
+            'PumpV', 'MassFlow', 'BFGvolt', 'TPumpsON', 'TPumpsOFF'
+        ]]
+
+        #TODO: use dcc.Store for ds_time rather than global variable
+        global ds_time
+        ds_time = df_believable['UnixTime']
+        #print(ds_time)
+
+        # tuple that contains an alert message and dataframe showing the user how long a variables was below and above its boundaries.
+        # initially populate with a default variable, then updates dynamically when the user selects different variables from the dropdown.
+        bounds = mf.check_bounds(df_boundary_numbers,
+                                    [constants.DEFAULT_VARIABLE],
+                                    constants.BOUNDARY_COLUMN_NAME,
+                                    df_believable, ds_time, ds_keywords,
+                                    ds_replacements, text)
+        df_bounds = bounds[
+            1]  # the second part of the tuple, a pandas dataframe
+
+        # initially populate with a default variable, then updates dynamically when the user selects different variables from the dropdown.
+        df_stats = mf.summary_stats(df_believable,
+                                    [constants.DEFAULT_VARIABLE],
+                                    df_bounds, ds_keywords,
+                                    ds_replacements)
+
+        #print stuff to terminal to know better what is going on
+        #print(mf.summary_stats(df_believable, [constants.DEFAULT_VARIABLE], df_bounds, ds_keywords, ds_replacements))
+
+        return html.Div(
+            id='file_info_container',
+            children=[
+                html.Span('Showing results for file'),
+                html.Span(mf.pull_value(text, 'LogFilename')),
+                html.P(mf.on_load(text, ds_time),
+                    style={'whiteSpace': 'pre-line'})
+            ]
+        ), html.Div(
+            # return a table of the study data from the dataframe
+            id='table1_container',
+            children=[
+                html.H2(strings.title_table1),
+                dash_table.DataTable(
+                    id='table1',
+                    data=df_relevant.to_dict('records'),
+                    columns=[{
+                        'id': col, #tried this code to make it an index I could reference in selecting columns, preventing any data from displaying in table
+                        'name': col,
+                        #'selectable': True,
+                        'hideable': True
+                    } for idx, col in enumerate(df_relevant.columns)],
+                    tooltip_header={i: df_dictionary['Description'][i] for i in df_relevant.columns},
+                    virtualization=True,  #allows faster loading for large tables
+                    #column_selectable = 'multi',
+                    #selected_columns = [],
+                    fixed_columns={
+                        'headers': True,
+                        'data': 1
+                    },
+                    fixed_rows={
+                        'headers': True
+                    },  #still see header names as scroll through table
+                    style_cell={
+                        'minWidth': 180,
+                        'width': 180,
+                        'maxWidth': 180
+                    },  #set width to see header names, may use a wrap technique when names contain spaces
+                    style_table={
+                        'height': 350,  # default is 500
+                        'minWidth': '100%'
+                    },
+                    style_header={
+                        'backgroundColor': 'darkgrey',
+                        'fontWeight': 'bold',
+                    }),
+            ]
+        ), html.Div(  # return radio buttons to select desired time series for the x-axis of the scatterplot
+            id='radio_items_container',
+            children=[
+                html.P(strings.select1,
+                    style={
+                        'fontWeight': 'bold',
+                        'display': 'inline'
+                    }),
+                dcc.RadioItems(options=list(df_believable.columns.values[1:4]),
+                            value='DateTimeLocal',
+                            id='time-series-radio-buttons',
+                            inline=True,
+                            style={'display': 'inline'})
+            ]
+        ), html.Div(  # return a dropdown menu to select desired series to plot on the scatterplot and analyze
+            id='dropdown_container',
+            children=[
+                html.P(strings.select2,
+                    style={
+                        'fontWeight': 'bold',
+                        'display': 'inline'
+                    }),
+                dcc.Dropdown(options=list(df_believable.columns.values[4:]),
+                            value=[constants.DEFAULT_VARIABLE],  # initially populate with a default variable, then update dynamically when the user selects different variables from the dropdown.
+                            id='variable-dropdown',
+                            multi=True,
+                            placeholder='Select Sensor Data')
+            ],
+            style={
+                'display': 'inline',
+                'width': '50%',
+                'height': '40px'
+            }
+        ), dcc.Graph(  # return a scatterplot
+            id='graph', figure={}
+        ), html.Div(  # return a warning if data goes beyond a certain range
+            id='Error-message-container',
+            children=[
+                html.H2('Sensor Value Range'),
+                html.P(children=bounds[0],
+                        id='error-message',
                         style={
                             'display': 'inline-block',
-                            'width': '50%',
-                            'position': 'absolute'
+                            'width': '50%'
                         }),
-                    dcc.Store(id='bounds_store', data=bounds[1].to_dict('records'))
-                ],
-                style={
-                    'whiteSpace': 'pre-line'
-                }), html.Div(  # return summary statistics as a table #TODO: separate summary stats table into its own div for organization/layout purposes
-                    id='stats-container',
-                    children=[
-                        html.H2('Summary Statistics'),
-                        html.Div(
-                            dash_table.DataTable(
-                                id='stats',
-                                data=df_stats.to_dict('records'),
-                                columns=[{
-                                    "name": i,
-                                    "id": i
-                                } for i in df_stats.columns],
-                                hidden_columns=['beyondLimit'],  # hide column used for conditional styling 
-                                tooltip_header={
-                                    'Variable': 'Measured metric of interest',
-                                    'Mean': strings.mean_explanation,
-                                    'Standard Deviation': strings.stdDev_explanation,
-                                    'Coefficient of Variation': strings.coefV_explanation,
-                                    'Inter-Quartile Range': strings.iqr_explanation
+                # return guiding text to explain how to interpret out of bounds flags
+                html.Div(
+                    [
+                        html.H3('How to interpret out of range flags'),
+                        html.P(strings.flags_guiding_text)
+                    ],
+                    style={
+                        'display': 'inline-block',
+                        'width': '50%',
+                        'position': 'absolute'
+                    }),
+                dcc.Store(id='bounds_store', data=bounds[1].to_dict('records'))
+            ],
+            style={
+                'whiteSpace': 'pre-line'
+            }), html.Div(  # return summary statistics as a table #TODO: separate summary stats table into its own div for organization/layout purposes
+                id='stats-container',
+                children=[
+                    html.H2('Summary Statistics'),
+                    html.Div(
+                        dash_table.DataTable(
+                            id='stats',
+                            data=df_stats.to_dict('records'),
+                            columns=[{
+                                "name": i,
+                                "id": i
+                            } for i in df_stats.columns],
+                            hidden_columns=['beyondLimit'],  # hide column used for conditional styling 
+                            tooltip_header={
+                                'Variable': 'Measured metric of interest',
+                                'Mean': strings.mean_explanation,
+                                'Standard Deviation': strings.stdDev_explanation,
+                                'Coefficient of Variation': strings.coefV_explanation,
+                                'Inter-Quartile Range': strings.iqr_explanation
+                            },
+                            style_as_list_view=
+                            True,  #remove vertical lines in table
+                            style_header={
+                                'backgroundColor': 'darkgrey',
+                                'fontWeight': 'bold'
+                            },
+                            style_data={ # wrap long content with spaces onto the next line
+                                'whiteSpace': 'normal',
+                                'height': 'auto',
+                            },
+                            style_cell={
+                                'maxWidth': 100
+                            },
+                            style_header_conditional=[{
+                                'if': {
+                                    'column_id': 'Variable',
                                 },
-                                style_as_list_view=
-                                True,  #remove vertical lines in table
-                                style_header={
-                                    'backgroundColor': 'darkgrey',
-                                    'fontWeight': 'bold'
-                                },
-                                style_data={ # wrap long content with spaces onto the next line
-                                    'whiteSpace': 'normal',
-                                    'height': 'auto',
-                                },
-                                style_cell={
-                                    'maxWidth': 100
-                                },
-                                style_header_conditional=[{
+                                'textAlign': 'left'
+                            }],
+
+                            style_data_conditional=[{
                                     'if': {
                                         'column_id': 'Variable',
                                     },
                                     'textAlign': 'left'
+                                }, {
+                                    'if': {
+                                        'row_index': 'odd'  # Temporary test to see if conditional styling works
+                                    },
+                                    'backgroundColor': 'lightgrey'
                                 }],
-
-                                style_data_conditional=[{
-                                        'if': {
-                                            'column_id': 'Variable',
-                                        },
-                                        'textAlign': 'left'
-                                    }, {
-                                        'if': {
-                                            'row_index': 'odd'  # Temporary test to see if conditional styling works
-                                        },
-                                        'backgroundColor': 'lightgrey'
-                                    }],
-                            ),
-                            style={
-                                'width': '48%',
-                                'display': 'inline-block'
-                            }),
-                        ])
-        except ValueError as error:  #NameError?, ValueError?, EOFError?, RuntimeError?
-            print('Program error:')
-            print(traceback.format_exc())
-            logging.error(traceback.format_exc())
-            return html.Div(
-                id='file-error',
-                children=[
-                    html.
-                    P('File format is not supported. Program cannot read this file.'
-                      ),
-                    #html.P(error)
-                ])
+                        ),
+                        style={
+                            'width': '48%',
+                            'display': 'inline-block'
+                        }),
+                    ])
+        
     else:
         return ""
 

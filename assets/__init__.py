@@ -1,0 +1,1 @@
+# Marks the assets directory as a Python package, enabling imports

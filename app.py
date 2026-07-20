@@ -77,7 +77,7 @@ def select_file(
         contents (str): The contents of the uploaded file, encoded in base64.
     
     Returns:
-        A tuple of different HTML elements: 
+        A tuple of different HTML elements on success: 
             html.Div: file information and results of the completeness checks. 
             html.Div: a table of the study data. 
             html.Div: radio buttons to select the time series for the scatterplot. 
@@ -85,12 +85,24 @@ def select_file(
             dcc.Graph: a scatterplot of the selected variables.
             html.Div: a section containing alert messages if any variables go beyond its boundaries, guiding text to explain how to interpret out of bounds flags, and a summary statistics table for the selected variables.
 
-        Returns html.Div containing an error message if the file format is not supported.
+        Returns html.Div with a specific error message if any stage fails:
+            - Unexpected upload format (ValueError from split)
+            - Unsupported file encoding (not base64)
+            - Unsupported file type (not text/csv)
+            - Could not decode file (binascii.Error)
+            - Could not read file encoding (UnicodeDecodeError)
+            - Could not find data table (find_table_start returns None)
+            - Missing expected column (KeyError in DataFrame creation)
+            - Could not parse CSV (pd.errors.ParserError)
+            - Could not calculate bounds or statistics
+        
         Returns an empty string if no file is uploaded.
 
     Note:
         Updates global variables: df_relevant, df_believable, df_units, ds_time, and text when a valid file is successfully loaded.
         These are accessed by subsequent callbacks.
+
+        df_units is non-blocking. If it fails, app continues without units and logs a warning.
     
         The scatterplot, bounds alerts, and summary statistics table are initially populated with a default variable defined in constants.
         These update dynamically when the user selects different variables from the dropdown.

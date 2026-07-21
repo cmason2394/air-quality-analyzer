@@ -1,3 +1,5 @@
+
+import pytest
 from assets import my_functions as mf
 
 class TestContainsNumber:
@@ -50,6 +52,11 @@ class TestChangeTimeUnit:
         assert mf.change_time_unit(1.5) == (1.5, 's')
     def test_change_time_unit_60_and_half_seconds_returns_1_min(self):
         assert mf.change_time_unit(60.5) == (1.0, 'min')
+    def test_change_time_unit_negative_number_raises_ValueError(self):
+        with pytest.raises(ValueError):
+            mf.change_time_unit(-10)
+    def test_change_time_unit_big_number_returns_days(self):
+        assert mf.change_time_unit(99999999) == (1157.4, 'days')
 
     
     

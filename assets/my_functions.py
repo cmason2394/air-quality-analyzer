@@ -187,15 +187,20 @@ def change_time_unit(time: float) -> tuple[float, str]:
     rounding to one decimal place.
 
     Args:
-        time (float): time in seconds
+        time (float): time in seconds, must be a non-negative number.
 
     Returns:
         tuple[float, str]: (converted_time, unit) where unit is one of 's', 'min', 'hrs', 'days'
 
+    Raises:
+        ValueError: if time is negative.
+        
     Example:
         >>> change_time_unit(3700)
         (1.0, 'hrs')
     """
+    if time < 0:
+        raise ValueError(f"time must be a positive number, got {time}")
     unit = 's'
     if time >= 60:  # more than 60 seconds
         time = round(time / 60, 1)  #minutes
